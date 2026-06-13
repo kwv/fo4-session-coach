@@ -1,0 +1,9 @@
+{
+    "globalFunctions": [
+        {
+            "eventName": "OnPostLoadGame",
+            "scriptName": "SessionCoach",
+            "functionName": "OnPostLoadGameEvent"
+        }
+    ]
+}

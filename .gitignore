@@ -1,0 +1,10 @@
+# Machine-specific paths — copy paths.example.bat and fill in yours
+tools/paths.local.bat
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
