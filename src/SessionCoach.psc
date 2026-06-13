@@ -32,10 +32,10 @@ Function Log(string asLine) Global
 EndFunction
 
 ; -----------------------------------------------------------------------
-; WriteSessionStart — captures baseline state on load.
-; Console: cgf "SessionCoach.WriteSessionStart"
+; BuildStateJson — current character state as a JSON string.
+; Shared by WriteSessionStart and OnPostSaveGameEvent.
 ; -----------------------------------------------------------------------
-Function WriteSessionStart() Global
+string Function BuildStateJson() Global
     Actor player = Game.GetPlayer()
 
     int str  = player.GetValue(Game.GetStrengthAV())     as int
@@ -47,12 +47,33 @@ Function WriteSessionStart() Global
     int luc  = player.GetValue(Game.GetLuckAV())         as int
 
     string special = "\"special\":{\"S\":" + str + ",\"P\":" + per + ",\"E\":" + endu + ",\"C\":" + cha + ",\"I\":" + inte + ",\"A\":" + agi + ",\"L\":" + luc + "}"
+    return "{\"date\":\"" + GameDate() + "\",\"time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + "}"
+EndFunction
 
+; -----------------------------------------------------------------------
+; WriteSessionStart — captures baseline state on load, clears event log.
+; Console: cgf "SessionCoach.WriteSessionStart"
+; -----------------------------------------------------------------------
+Function WriteSessionStart() Global
     string[] lines = new string[1]
-    lines[0] = "{\"date\":\"" + GameDate() + "\",\"time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + "}"
-
+    lines[0] = BuildStateJson()
     Hydra:IO:File.WriteAllLines("SessionCoach_SessionStart.json", lines)
+
+    string[] empty = new string[1]
+    empty[0] = ""
+    Hydra:IO:File.WriteAllLines("SessionCoach_Events.jsonl", empty)
+
     Debug.Notification("[Session Coach] Loaded")
+EndFunction
+
+; -----------------------------------------------------------------------
+; OnPostSaveGameEvent — captures end-of-session state on save.
+; -----------------------------------------------------------------------
+Function OnPostSaveGameEvent(Hydra:Events:PostSaveGameParams akParams) Global
+    string[] lines = new string[1]
+    lines[0] = BuildStateJson()
+    Hydra:IO:File.WriteAllLines("SessionCoach_SessionEnd.json", lines)
+    Debug.Notification("[Session Coach] Session saved")
 EndFunction
 
 ; -----------------------------------------------------------------------

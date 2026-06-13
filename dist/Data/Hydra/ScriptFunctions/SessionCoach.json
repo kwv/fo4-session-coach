@@ -4,6 +4,11 @@
             "eventName": "OnPostLoadGame",
             "scriptName": "SessionCoach",
             "functionName": "OnPostLoadGameEvent"
+        },
+        {
+            "eventName": "OnPostSaveGame",
+            "scriptName": "SessionCoach",
+            "functionName": "OnPostSaveGameEvent"
         }
     ]
 }
