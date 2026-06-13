@@ -47,8 +47,6 @@ EndFunction
 ; Registers all session event listeners, then writes snapshot.
 ; ---------------------------------------------------------------
 Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
-    ; Register for location changes — proves global event callbacks work.
-    ; abPersistent = false: re-registers on each load, safe to call repeatedly.
     Hydra:Events.RegisterForLocationEnterExit( \
         Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationEnterExitEvent"))
 
@@ -56,18 +54,14 @@ Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
 EndFunction
 
 ; ---------------------------------------------------------------
-; OnLocationEnterExitEvent — fires when any actor crosses a location
-; boundary. We filter to player entering only.
+; OnLocationEnterExitEvent — kSourceActor is unreliable in global context;
+; filter on kNewLocation only (None = exit event, skip it).
 ; ---------------------------------------------------------------
 Function OnLocationEnterExitEvent(Hydra:Events:LocationEnterExitParams akParams) Global
-    if akParams.kSourceActor != Game.GetPlayer()
-        return
-    endif
     if akParams.kNewLocation == None
         return
     endif
 
-    ; Prove-out: write a line to the events log so we can confirm it fired.
     Hydra:IO:File.AppendLine("SessionCoach_Events.jsonl", \
         "{\"type\":\"location\",\"fired\":true}")
     Debug.Notification("[Session Coach] Location event fired!")

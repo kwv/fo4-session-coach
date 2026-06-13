@@ -22,7 +22,9 @@ Target: community Nexus release. Design for any playstyle, any character.
   stubs/Hydra/Events.psc          ← minimal compilation stub (see Compiler notes)
   dist/Data/Scripts/SessionCoach.pex
   dist/Data/Hydra/ScriptFunctions/SessionCoach.json
-  tools/compile.bat               ← build + deploy (double-click from Windows)
+  Makefile                        ← build/run from WSL (make build, make run)
+  tools/compile.bat               ← build + deploy (called by Makefile or double-click)
+  tools/run.bat                   ← launches f4se_loader.exe (called by Makefile)
   tools/paths.local.bat           ← gitignored, machine-specific paths
   tools/paths.example.bat
   docs/coaching_prompt.md         ← the Claude.ai prompt that ships with the mod
@@ -51,7 +53,8 @@ bLoadDebugInformation=1
 ```
 
 ## Build process
-Double-click `tools/compile.bat` from Windows. It:
+From WSL: `make build` (compile + deploy) or `make run` (launch game) or `make build run`.
+From Windows: double-click `tools/compile.bat`. It:
 1. Copies `src/SessionCoach.psc` into the game's `Source\User\` (staging — see Compiler notes)
 2. Compiles with import path: `stubs\` → `game Source\User\` → `game Source\`
 3. Outputs `SessionCoach.pex` to `dist/Data/Scripts/`
@@ -127,23 +130,21 @@ On Save:
 ## Known Hydra issues
 - `Hydra:Forms:Form.GetName(actor)` crashes — use `actor.GetDisplayName()` for Actor/ObjectReference
 - `Location` is not a Form subtype in Papyrus — `loc as Form` is unsafe; location names currently skipped
+- `kSourceActor` in `LocationEnterExitParams` is unreliable when registered via global FunctionRef — do not compare against `Game.GetPlayer()`; filter on `kNewLocation == None` instead (None = exit event)
 
 ## What's proven working
 - Auto-trigger on load via Script Function Runner ✅
 - File writing via Hydra:IO:File.WriteAllLines ✅
+- File appending via Hydra:IO:File.AppendLine ✅
 - `player.GetDisplayName()` for player name ✅
 - Hydra:Time for in-game date ✅
 - SPECIAL stats via GetValue ✅
-- Global event callback registration: **pending prove-out** — OnLocationEnterExit registered, watching for HUD notification on next location change
-
-## Pending prove-out
-Load game, cross into any named location. Should see `[Session Coach] Location event fired!`
-and `SessionCoach_Events.jsonl` appear in game root. If confirmed → full session tracking is viable
-without an ESP.
+- Global event callbacks via `Hydra:Events.RegisterForLocationEnterExit` + `CreateGlobalRef` ✅
+- `SessionCoach_Events.jsonl` written on location change ✅
 
 ## Layer roadmap
 - **Layer 1** ✅ SPECIAL, level, player name, auto-trigger on load, repo scaffolded
-- **Prove-out** ⏳ Global Hydra event callbacks (location event test)
+- **Prove-out** ✅ Global Hydra event callbacks confirmed working
 - **Next**: JSON format, OnPostSaveGame trigger, session start/end model
 - **Layer 2**: Perks (named list + ranks), bobbleheads, magazines, settlements, active quests
 - **Layer 3**: Session delta — new perks, quests advanced, locations visited, XP gained, levels
