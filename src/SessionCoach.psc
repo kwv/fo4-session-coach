@@ -58,6 +58,24 @@ EndFunction
 ; -----------------------------------------------------------------------
 ; OnPostLoadGameEvent — registers all session event listeners
 ; -----------------------------------------------------------------------
+; DebugAVIds — logs form IDs for all 7 SPECIAL AVs so we can check
+; if they're contiguous and build an efficient range filter.
+; Console: cgf "SessionCoach.DebugAVIds"
+; -----------------------------------------------------------------------
+Function DebugAVIds() Global
+    string[] lines = new string[7]
+    lines[0] = "Strength    = " + Game.GetStrengthAV().GetFormID()
+    lines[1] = "Perception  = " + Game.GetPerceptionAV().GetFormID()
+    lines[2] = "Endurance   = " + Game.GetEnduranceAV().GetFormID()
+    lines[3] = "Charisma    = " + Game.GetCharismaAV().GetFormID()
+    lines[4] = "Intelligence= " + Game.GetIntelligenceAV().GetFormID()
+    lines[5] = "Agility     = " + Game.GetAgilityAV().GetFormID()
+    lines[6] = "Luck        = " + Game.GetLuckAV().GetFormID()
+    Hydra:IO:File.WriteAllLines("SessionCoach_AVIds.txt", lines)
+    Debug.Notification("[Session Coach] AV IDs written")
+EndFunction
+
+; -----------------------------------------------------------------------
 Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
     Hydra:Events.RegisterForLocationEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationEnterExitEvent"))
     Hydra:Events.RegisterForLocationLoad(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationLoadEvent"))
@@ -96,6 +114,8 @@ Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
     Hydra:Events.RegisterForDestructionStageChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnDestructionStageChangeEvent"))
     Hydra:Events.RegisterForCellEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnCellEnterExitEvent"))
     Hydra:Events.RegisterForActiveEffectApplyRemove(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActiveEffectApplyRemoveEvent"))
+    ; SPECIAL range 706-712 confirmed contiguous — catches bobbleheads, You're SPECIAL!, Intense Training
+    Hydra:Events.RegisterForActorValueChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActorValueChangeEvent"))
 
     WriteSessionStart()
 EndFunction
@@ -148,7 +168,15 @@ Function OnMiscStatChangeEvent(Hydra:Events:MiscStatChangeParams akParams) Globa
 EndFunction
 
 Function OnBookReadEvent(Hydra:Events:BookReadParams akParams) Global
-    Log("{\"type\":\"book\",\"name\":\"" + akParams.kBook.GetName() + "\",\"time\":\"" + GameTime() + "\"}")
+    Log("{\"type\":\"found\",\"category\":\"magazine\",\"name\":\"" + akParams.kBook.GetName() + "\",\"time\":\"" + GameTime() + "\"}")
+EndFunction
+
+Function OnActorValueChangeEvent(Hydra:Events:ActorValueChangeParams akParams) Global
+    int id = akParams.kSourceValue.GetFormID()
+    if id < 706 || id > 712
+        return
+    endif
+    Log("{\"type\":\"av_change\",\"av\":\"" + akParams.kSourceValue.GetName() + "\",\"from\":" + (akParams.fOldValue as int) + ",\"to\":" + (akParams.fNewValue as int) + ",\"time\":\"" + GameTime() + "\"}")
 EndFunction
 
 Function OnLockPickEvent(Hydra:Events:LockPickParams akParams) Global
@@ -170,7 +198,13 @@ Function OnItemEquipUnequipEvent(Hydra:Events:ItemEquipUnequipParams akParams) G
 EndFunction
 
 Function OnItemAddRemoveEvent(Hydra:Events:ItemAddRemoveParams akParams) Global
-    Log("{\"type\":\"item\",\"name\":\"" + akParams.kItem.GetName() + "\",\"count\":" + akParams.iItemCount + ",\"time\":\"" + GameTime() + "\"}")
+    if akParams.iItemCount <= 0
+        return
+    endif
+    string name = akParams.kItem.GetName()
+    if Hydra:Strings.Contains(name, "Bobblehead")
+        Log("{\"type\":\"found\",\"category\":\"bobblehead\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+    endif
 EndFunction
 
 Function OnCombatStateChangeEvent(Hydra:Events:CombatStateChangeParams akParams) Global
