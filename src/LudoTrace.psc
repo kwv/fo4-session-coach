@@ -28,7 +28,7 @@ EndFunction
 ; Log — append one event line to the session log
 ; -----------------------------------------------------------------------
 Function Log(string asLine) Global
-    Hydra:IO:File.AppendLine("SessionCoach_Events.jsonl", asLine)
+    Hydra:IO:File.AppendLine("LudoTrace_Events.jsonl", asLine)
 EndFunction
 
 ; -----------------------------------------------------------------------
@@ -186,7 +186,7 @@ string Function BuildStateJson(string asType) Global
     float fT3 = Utility.GetCurrentRealTime()
     string sAid = BuildAidJson()
     float fT4 = Utility.GetCurrentRealTime()
-    Hydra:IO:File.AppendLine("SessionCoach_Events.jsonl", "{\"type\":\"_timing\",\"phase\":\"" + asType + "\",\"special_ms\":" + ((fT1-fT0)*1000 as int) + ",\"bob_ms\":" + ((fT2-fT1)*1000 as int) + ",\"ammo_ms\":" + ((fT3-fT2)*1000 as int) + ",\"aid_ms\":" + ((fT4-fT3)*1000 as int) + "}")
+    Hydra:IO:File.AppendLine("LudoTrace_Events.jsonl", "{\"type\":\"_timing\",\"phase\":\"" + asType + "\",\"special_ms\":" + ((fT1-fT0)*1000 as int) + ",\"bob_ms\":" + ((fT2-fT1)*1000 as int) + ",\"ammo_ms\":" + ((fT3-fT2)*1000 as int) + ",\"aid_ms\":" + ((fT4-fT3)*1000 as int) + "}")
     return "{\"type\":\"" + asType + "\",\"date\":\"" + GameDate() + "\",\"time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + ",\"bobbleheads\":" + sBob + ",\"ammo\":" + sAmmo + ",\"aid\":" + sAid + "}"
 EndFunction
 
@@ -197,7 +197,7 @@ EndFunction
 Function WriteSessionStart() Global
     string[] lines = new string[1]
     lines[0] = BuildStateJson("session_start")
-    Hydra:IO:File.WriteAllLines("SessionCoach_Events.jsonl", lines)
+    Hydra:IO:File.WriteAllLines("LudoTrace_Events.jsonl", lines)
     Debug.Notification("[Session Coach] Loaded")
 EndFunction
 
@@ -279,7 +279,7 @@ Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
 EndFunction
 
 ; -----------------------------------------------------------------------
-; Event callbacks — all append one JSON line to SessionCoach_Events.jsonl
+; Event callbacks — all append one JSON line to LudoTrace_Events.jsonl
 ; -----------------------------------------------------------------------
 
 int Function BobbleheadFormId(string asName) Global

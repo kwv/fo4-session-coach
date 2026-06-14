@@ -1,7 +1,7 @@
 Scriptname Hydra:Events Const Hidden Native
 
 ;/
-	Minimal compilation stub for SessionCoach.
+	Minimal compilation stub for LudoTrace.
 	All *Args structs that contain array fields are replaced with int iEmptyStruct
 	so this file compiles cleanly with Papyrus Compiler v2.8.0.4 (no struct arrays).
 	The Params structs are kept verbatim — they are the callback parameter types we need.
