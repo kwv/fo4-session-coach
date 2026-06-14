@@ -20,11 +20,11 @@ jobs:
           cp -r dist/Data release_staging/Data
           cp docs/coaching_prompt.md release_staging/coaching_prompt.md
           cd release_staging
-          zip -r "../FO4-Session-Coach-${{ github.ref_name }}.zip" .
+          zip -r "../LudoTrace-FO4-${{ github.ref_name }}.zip" .
           cd ..
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: FO4-Session-Coach-${{ github.ref_name }}.zip
+          files: LudoTrace-FO4-${{ github.ref_name }}.zip
           generate_release_notes: true
