@@ -35,7 +35,138 @@ EndFunction
 ; BuildStateJson — current character state as a JSON string.
 ; Shared by WriteSessionStart and OnPostSaveGameEvent.
 ; -----------------------------------------------------------------------
-string Function BuildStateJson() Global
+string Function BuildPerksJson() Global
+    ActorBase playerBase = Hydra:Forms:Actor.GetActorBase(Game.GetPlayer())
+    Hydra:Forms:ActorBase:PerkRank[] perks = Hydra:Forms:ActorBase.GetPerks(playerBase)
+    string result = "["
+    bool first = true
+    int i = 0
+    while i < perks.Length
+        if perks[i].kPerk != None && perks[i].iRank > 0
+            if !first
+                result += ","
+            endif
+            result += "{\"name\":\"" + perks[i].kPerk.GetName() + "\",\"rank\":" + perks[i].iRank + "}"
+            first = false
+        endif
+        i += 1
+    endwhile
+    return result + "]"
+EndFunction
+
+string Function BuildAmmoJson() Global
+    Actor player = Game.GetPlayer()
+    string[] names = new string[19]
+    names[0]  = ".308 Round"
+    names[1]  = ".38 Round"
+    names[2]  = ".44 Round"
+    names[3]  = ".45 Round"
+    names[4]  = ".50 Caliber Round"
+    names[5]  = "10mm Round"
+    names[6]  = "5.56 Round"
+    names[7]  = "5mm Round"
+    names[8]  = "2mm EC"
+    names[9]  = "Fusion Cell"
+    names[10] = "Fusion Core"
+    names[11] = "Plasma Cartridge"
+    names[12] = "Shotgun Shell"
+    names[13] = "Mini Nuke"
+    names[14] = "Missile"
+    names[15] = "Railway Spike"
+    names[16] = "Cryo Cell"
+    names[17] = "Gamma Round"
+    names[18] = "Flamer Fuel"
+    int[] ids = new int[19]
+    ids[0]  = 0x0001f66b
+    ids[1]  = 0x0004ce87
+    ids[2]  = 0x0009221c
+    ids[3]  = 0x0001f66a
+    ids[4]  = 0x0001f279
+    ids[5]  = 0x0001f276
+    ids[6]  = 0x0001f278
+    ids[7]  = 0x0001f66c
+    ids[8]  = 0x0018abdf
+    ids[9]  = 0x000c1897
+    ids[10] = 0x00075fe4
+    ids[11] = 0x0001dbb7
+    ids[12] = 0x0001f673
+    ids[13] = 0x000e6b2e
+    ids[14] = 0x000caba3
+    ids[15] = 0x000fe269
+    ids[16] = 0x0018abe2
+    ids[17] = 0x000df279
+    ids[18] = 0x000cac78
+    string result = "{"
+    bool first = true
+    int i = 0
+    while i < 19
+        Form f = Game.GetForm(ids[i])
+        if f != None
+            int count = player.GetItemCount(f)
+            if count > 0
+                if !first
+                    result += ","
+                endif
+                result += "\"" + names[i] + "\":" + count
+                first = false
+            endif
+        endif
+        i += 1
+    endwhile
+    return result + "}"
+EndFunction
+
+string Function BuildAidJson() Global
+    Actor player = Game.GetPlayer()
+    string[] names = new string[13]
+    names[0]  = "Stimpak"
+    names[1]  = "RadAway"
+    names[2]  = "Rad-X"
+    names[3]  = "Med-X"
+    names[4]  = "Jet"
+    names[5]  = "Mentats"
+    names[6]  = "Buffout"
+    names[7]  = "Psycho"
+    names[8]  = "Calmex"
+    names[9]  = "Overdrive"
+    names[10] = "X-Cell"
+    names[11] = "Stealth Boy"
+    names[12] = "Addictol"
+    int[] ids = new int[13]
+    ids[0]  = 0x00023736
+    ids[1]  = 0x00023742
+    ids[2]  = 0x00024057
+    ids[3]  = 0x00033779
+    ids[4]  = 0x000366c5
+    ids[5]  = 0x0003377b
+    ids[6]  = 0x00033778
+    ids[7]  = 0x0003377d
+    ids[8]  = 0x00058aa7
+    ids[9]  = 0x00058aad
+    ids[10] = 0x001506f4
+    ids[11] = 0x0004f4a6
+    ids[12] = 0x000459c5
+    string result = "{"
+    bool first = true
+    int i = 0
+    while i < 13
+        Form f = Game.GetForm(ids[i])
+        if f != None
+            int count = player.GetItemCount(f)
+            if count > 0
+                if !first
+                    result += ","
+                endif
+                result += "\"" + names[i] + "\":" + count
+                first = false
+            endif
+        endif
+        i += 1
+    endwhile
+    return result + "}"
+EndFunction
+
+string Function BuildStateJson(string asType) Global
     Actor player = Game.GetPlayer()
 
     int str  = player.GetValue(Game.GetStrengthAV())     as int
@@ -46,8 +177,17 @@ string Function BuildStateJson() Global
     int agi  = player.GetValue(Game.GetAgilityAV())      as int
     int luc  = player.GetValue(Game.GetLuckAV())         as int
 
+    float fT0 = Utility.GetCurrentRealTime()
     string special = "\"special\":{\"S\":" + str + ",\"P\":" + per + ",\"E\":" + endu + ",\"C\":" + cha + ",\"I\":" + inte + ",\"A\":" + agi + ",\"L\":" + luc + "}"
-    return "{\"date\":\"" + GameDate() + "\",\"time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + "}"
+    float fT1 = Utility.GetCurrentRealTime()
+    string sBob = BuildBobbleheadsJson()
+    float fT2 = Utility.GetCurrentRealTime()
+    string sAmmo = BuildAmmoJson()
+    float fT3 = Utility.GetCurrentRealTime()
+    string sAid = BuildAidJson()
+    float fT4 = Utility.GetCurrentRealTime()
+    Hydra:IO:File.AppendLine("SessionCoach_Events.jsonl", "{\"type\":\"_timing\",\"phase\":\"" + asType + "\",\"special_ms\":" + ((fT1-fT0)*1000 as int) + ",\"bob_ms\":" + ((fT2-fT1)*1000 as int) + ",\"ammo_ms\":" + ((fT3-fT2)*1000 as int) + ",\"aid_ms\":" + ((fT4-fT3)*1000 as int) + "}")
+    return "{\"type\":\"" + asType + "\",\"date\":\"" + GameDate() + "\",\"time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + ",\"bobbleheads\":" + sBob + ",\"ammo\":" + sAmmo + ",\"aid\":" + sAid + "}"
 EndFunction
 
 ; -----------------------------------------------------------------------
@@ -56,13 +196,8 @@ EndFunction
 ; -----------------------------------------------------------------------
 Function WriteSessionStart() Global
     string[] lines = new string[1]
-    lines[0] = BuildStateJson()
-    Hydra:IO:File.WriteAllLines("SessionCoach_SessionStart.json", lines)
-
-    string[] empty = new string[1]
-    empty[0] = ""
-    Hydra:IO:File.WriteAllLines("SessionCoach_Events.jsonl", empty)
-
+    lines[0] = BuildStateJson("session_start")
+    Hydra:IO:File.WriteAllLines("SessionCoach_Events.jsonl", lines)
     Debug.Notification("[Session Coach] Loaded")
 EndFunction
 
@@ -70,9 +205,7 @@ EndFunction
 ; OnPostSaveGameEvent — captures end-of-session state on save.
 ; -----------------------------------------------------------------------
 Function OnPostSaveGameEvent(Hydra:Events:PostSaveGameParams akParams) Global
-    string[] lines = new string[1]
-    lines[0] = BuildStateJson()
-    Hydra:IO:File.WriteAllLines("SessionCoach_SessionEnd.json", lines)
+    Log(BuildStateJson("session_end"))
     Debug.Notification("[Session Coach] Session saved")
 EndFunction
 
@@ -98,8 +231,9 @@ EndFunction
 
 ; -----------------------------------------------------------------------
 Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
-    Hydra:Events.RegisterForLocationEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationEnterExitEvent"))
-    Hydra:Events.RegisterForLocationLoad(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationLoadEvent"))
+    ; LocationEnterExit fires for all actors (NPC home locations) — replaced by CellEnterExit filtered to player
+    ; Hydra:Events.RegisterForLocationEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationEnterExitEvent"))
+    ; Hydra:Events.RegisterForLocationLoad(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationLoadEvent"))
     Hydra:Events.RegisterForLevelIncrease(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLevelIncreaseEvent"))
     Hydra:Events.RegisterForQuestStageChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnQuestStageChangeEvent"))
     Hydra:Events.RegisterForQuestStartStop(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnQuestStartStopEvent"))
@@ -123,9 +257,11 @@ Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
     Hydra:Events.RegisterForMenuModeEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnMenuModeEnterExitEvent"))
     Hydra:Events.RegisterForMenuOpenClose(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnMenuOpenCloseCB"))
     Hydra:Events.RegisterForDifficultyChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnDifficultyChangeEvent"))
-    Hydra:Events.RegisterForLifeStateChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLifeStateChangeEvent"))
+    ; life_state: actors loading into world in dead state — not session kills
+    ; Hydra:Events.RegisterForLifeStateChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLifeStateChangeEvent"))
     Hydra:Events.RegisterForLimbCripple(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLimbCrippleEvent"))
-    Hydra:Events.RegisterForFurnitureEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnFurnitureEnterExitEvent"))
+    ; furniture: NPC chairs/couches fire constantly, no player signal
+    ; Hydra:Events.RegisterForFurnitureEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnFurnitureEnterExitEvent"))
     Hydra:Events.RegisterForObjectActivate(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectActivateEvent"))
     Hydra:Events.RegisterForSpellCast(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnSpellCastEvent"))
     ; trigger: invisible volumes, pure noise
@@ -134,7 +270,8 @@ Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
     Hydra:Events.RegisterForObjectGrabRelease(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectGrabReleaseEvent"))
     Hydra:Events.RegisterForDestructionStageChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnDestructionStageChangeEvent"))
     Hydra:Events.RegisterForCellEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnCellEnterExitEvent"))
-    Hydra:Events.RegisterForActiveEffectApplyRemove(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActiveEffectApplyRemoveEvent"))
+    ; effect: applied/removed fires for NPCs constantly — turrets, companions, enemies
+    ; Hydra:Events.RegisterForActiveEffectApplyRemove(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActiveEffectApplyRemoveEvent"))
     ; SPECIAL range 706-712 confirmed contiguous — catches bobbleheads, You're SPECIAL!, Intense Training
     Hydra:Events.RegisterForActorValueChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActorValueChangeEvent"))
 
@@ -145,11 +282,166 @@ EndFunction
 ; Event callbacks — all append one JSON line to SessionCoach_Events.jsonl
 ; -----------------------------------------------------------------------
 
+int Function BobbleheadFormId(string asName) Global
+    if asName == "Agility"
+        return 0x178B51
+    elseif asName == "Barter"
+        return 0x178B52
+    elseif asName == "Big Guns"
+        return 0x178B53
+    elseif asName == "Charisma"
+        return 0x178B54
+    elseif asName == "Endurance"
+        return 0x178B55
+    elseif asName == "Energy Weapons"
+        return 0x178B56
+    elseif asName == "Explosives"
+        return 0x178B57
+    elseif asName == "Intelligence"
+        return 0x178B58
+    elseif asName == "Lock Picking"
+        return 0x178B59
+    elseif asName == "Luck"
+        return 0x178B5A
+    elseif asName == "Medicine"
+        return 0x178B5B
+    elseif asName == "Melee"
+        return 0x178B5C
+    elseif asName == "Perception"
+        return 0x178B5D
+    elseif asName == "Repair"
+        return 0x178B5E
+    elseif asName == "Science"
+        return 0x178B5F
+    elseif asName == "Small Guns"
+        return 0x178B60
+    elseif asName == "Sneak"
+        return 0x178B61
+    elseif asName == "Speech"
+        return 0x178B62
+    elseif asName == "Strength"
+        return 0x178B63
+    elseif asName == "Unarmed"
+        return 0x178B64
+    endif
+    return 0
+EndFunction
+
+bool Function PlayerHasBobblehead(string asName) Global
+    int formId = BobbleheadFormId(asName)
+    if formId == 0
+        return false
+    endif
+    Form bobblehead = Game.GetForm(formId)
+    if bobblehead == None
+        return false
+    endif
+    return Game.GetPlayer().GetItemCount(bobblehead) > 0
+EndFunction
+
+string Function BuildBobbleheadsJson() Global
+    Actor player = Game.GetPlayer()
+    string[] names = new string[20]
+    names[0]  = "Agility"
+    names[1]  = "Barter"
+    names[2]  = "Big Guns"
+    names[3]  = "Charisma"
+    names[4]  = "Endurance"
+    names[5]  = "Energy Weapons"
+    names[6]  = "Explosives"
+    names[7]  = "Intelligence"
+    names[8]  = "Lock Picking"
+    names[9]  = "Luck"
+    names[10] = "Medicine"
+    names[11] = "Melee"
+    names[12] = "Perception"
+    names[13] = "Repair"
+    names[14] = "Science"
+    names[15] = "Small Guns"
+    names[16] = "Sneak"
+    names[17] = "Speech"
+    names[18] = "Strength"
+    names[19] = "Unarmed"
+    string result = "["
+    bool first = true
+    int i = 0
+    while i < 20
+        Form bobblehead = Game.GetForm(BobbleheadFormId(names[i]))
+        if bobblehead != None && player.GetItemCount(bobblehead) > 0
+            if !first
+                result += ","
+            endif
+            result += "\"" + names[i] + "\""
+            first = false
+        endif
+        i += 1
+    endwhile
+    return result + "]"
+EndFunction
+
+string Function BobbleheadAtLocation(string asLocation) Global
+    if asLocation == "Mass Fusion Building"
+        return "Strength"
+    elseif asLocation == "Museum of Freedom"
+        return "Perception"
+    elseif asLocation == "Poseidon Energy"
+        return "Endurance"
+    elseif asLocation == "Parsons State Insane Asylum"
+        return "Charisma"
+    elseif asLocation == "Boston Public Library"
+        return "Intelligence"
+    elseif asLocation == "Wreck of the FMS Northern Star"
+        return "Agility"
+    elseif asLocation == "Spectacle Island"
+        return "Luck"
+    elseif asLocation == "Longneck Lukowski's Cannery"
+        return "Barter"
+    elseif asLocation == "Vault 95"
+        return "Big Guns"
+    elseif asLocation == "Fort Hagen"
+        return "Energy Weapons"
+    elseif asLocation == "Saugus Ironworks"
+        return "Explosives"
+    elseif asLocation == "Pickman Gallery"
+        return "Lock Picking"
+    elseif asLocation == "Vault 81"
+        return "Medicine"
+    elseif asLocation == "Trinity Tower"
+        return "Melee"
+    elseif asLocation == "Corvega Assembly Plant"
+        return "Repair"
+    elseif asLocation == "Vault 75"
+        return "Science"
+    elseif asLocation == "Gunners Plaza"
+        return "Small Guns"
+    elseif asLocation == "Dunwich Borers"
+        return "Sneak"
+    elseif asLocation == "Park Street Station"
+        return "Speech"
+    elseif asLocation == "Atom Cats Garage"
+        return "Unarmed"
+    endif
+    return ""
+EndFunction
+
 Function OnLocationEnterExitEvent(Hydra:Events:LocationEnterExitParams akParams) Global
     if akParams.kNewLocation == None
         return
     endif
-    Log("{\"type\":\"location\",\"name\":\"" + akParams.kNewLocation.GetName() + "\",\"time\":\"" + GameTime() + "\"}")
+    string name = akParams.kNewLocation.GetName()
+    if name == ""
+        return
+    endif
+    if Hydra:TempSet.ContainsKey("sc_locations", name)
+        return
+    endif
+    Hydra:TempSet.Add("sc_locations", name)
+    string bobblehead = BobbleheadAtLocation(name)
+    if bobblehead != "" && !PlayerHasBobblehead(bobblehead)
+        Log("{\"type\":\"near_collectible\",\"category\":\"bobblehead\",\"name\":\"" + bobblehead + "\",\"location\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+        Debug.Notification("[Session Coach] Bobblehead nearby: " + bobblehead)
+    endif
+    Log("{\"type\":\"location\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
 
 Function OnLocationLoadEvent(Hydra:Events:LocationLoadParams akParams) Global
@@ -218,13 +510,48 @@ Function OnItemEquipUnequipEvent(Hydra:Events:ItemEquipUnequipParams akParams) G
     Log("{\"type\":\"equip\",\"item\":\"" + akParams.kItem.GetName() + "\",\"action\":\"" + sAction + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
 
-Function OnItemAddRemoveEvent(Hydra:Events:ItemAddRemoveParams akParams) Global
-    if akParams.iItemCount <= 0
-        return
+string Function AidItemCategory(string asName) Global
+    if Hydra:Strings.Contains(asName, "Stimpak")
+        return "healing"
+    elseif Hydra:Strings.Contains(asName, "RadAway")
+        return "radiation"
+    elseif Hydra:Strings.Contains(asName, "Rad-X")
+        return "radiation"
+    elseif Hydra:Strings.Contains(asName, "Jet")
+        return "chem"
+    elseif Hydra:Strings.Contains(asName, "Mentats")
+        return "chem"
+    elseif Hydra:Strings.Contains(asName, "Psycho")
+        return "chem"
+    elseif Hydra:Strings.Contains(asName, "Buffout")
+        return "chem"
+    elseif asName == "Med-X"
+        return "chem"
+    elseif asName == "Daddy-O"
+        return "chem"
+    elseif asName == "Day Tripper"
+        return "chem"
+    elseif asName == "X-Cell"
+        return "chem"
+    elseif asName == "Overdrive"
+        return "chem"
+    elseif asName == "Fury"
+        return "chem"
     endif
+    return ""
+EndFunction
+
+Function OnItemAddRemoveEvent(Hydra:Events:ItemAddRemoveParams akParams) Global
     string name = akParams.kItem.GetName()
-    if Hydra:Strings.Contains(name, "Bobblehead")
-        Log("{\"type\":\"found\",\"category\":\"bobblehead\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+    if akParams.iItemCount > 0
+        if Hydra:Strings.Contains(name, "Bobblehead")
+            Log("{\"type\":\"found\",\"category\":\"bobblehead\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+        endif
+    elseif akParams.iItemCount < 0
+        string category = AidItemCategory(name)
+        if category != ""
+            Log("{\"type\":\"used\",\"category\":\"" + category + "\",\"item\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+        endif
     endif
 EndFunction
 
@@ -318,7 +645,11 @@ Function OnFurnitureEnterExitEvent(Hydra:Events:FurnitureEnterExitParams akParam
 EndFunction
 
 Function OnObjectActivateEvent(Hydra:Events:ObjectActivateParams akParams) Global
-    Log("{\"type\":\"activate\",\"target\":\"" + akParams.kTargetRef.GetDisplayName() + "\",\"time\":\"" + GameTime() + "\"}")
+    string name = akParams.kTargetRef.GetDisplayName()
+    if name == ""
+        return
+    endif
+    Log("{\"type\":\"activate\",\"target\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
 
 Function OnSpellCastEvent(Hydra:Events:SpellCastParams akParams) Global
@@ -360,13 +691,30 @@ Function OnDestructionStageChangeEvent(Hydra:Events:DestructionStageChangeParams
 EndFunction
 
 Function OnCellEnterExitEvent(Hydra:Events:CellEnterExitParams akParams) Global
-    string sState
-    if akParams.bEntered
-        sState = "entered"
-    else
-        sState = "exited"
+    if !akParams.bEntered
+        return
     endif
-    Log("{\"type\":\"cell\",\"actor\":\"" + akParams.kSourceActor.GetDisplayName() + "\",\"cell\":\"" + akParams.kTargetCell.GetName() + "\",\"state\":\"" + sState + "\",\"time\":\"" + GameTime() + "\"}")
+    if akParams.kSourceActor != Game.GetPlayer()
+        return
+    endif
+    Location loc = Hydra:Forms:Cell.GetLocation(akParams.kTargetCell)
+    if loc == None
+        return
+    endif
+    string name = loc.GetName()
+    if name == ""
+        return
+    endif
+    if Hydra:TempSet.ContainsKey("sc_locations", name)
+        return
+    endif
+    Hydra:TempSet.Add("sc_locations", name)
+    string bobblehead = BobbleheadAtLocation(name)
+    if bobblehead != "" && !PlayerHasBobblehead(bobblehead)
+        Log("{\"type\":\"near_collectible\",\"category\":\"bobblehead\",\"name\":\"" + bobblehead + "\",\"location\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
+        Debug.Notification("[Session Coach] Bobblehead nearby: " + bobblehead)
+    endif
+    Log("{\"type\":\"location\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
 
 Function OnActiveEffectApplyRemoveEvent(Hydra:Events:ActiveEffectApplyRemoveParams akParams) Global

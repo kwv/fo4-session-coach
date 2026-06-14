@@ -28,15 +28,19 @@ Target: community Nexus release. Design for any playstyle, any character.
   tools/paths.local.bat           ← gitignored, machine-specific paths
   tools/paths.example.bat
   docs/coaching_prompt.md         ← the Claude.ai prompt that ships with the mod
+  referenceIds.tsv                ← Fallout 4 form IDs (perks, ammo, weapons, materials, consumables, weapon mods)
 ```
 
 ## Paths
-- Repo: `/mnt/d/projects/session-coach/`
-- Game: `D:\SteamLibrary\steamapps\common\Fallout 4`
-- Creation Kit + Compiler: `D:\SteamLibrary\steamapps\common\Fallout 4 1946160`
-- Compiler: `D:\SteamLibrary\steamapps\common\Fallout 4 1946160\Papyrus Compiler\PapyrusCompiler.exe`
-- Snapshot output: `D:\SteamLibrary\steamapps\common\Fallout 4\SessionCoach_Snapshot.json`
-- Session events log: `D:\SteamLibrary\steamapps\common\Fallout 4\SessionCoach_Events.jsonl`
+All machine-specific paths live in `tools/paths.local.bat` (gitignored). Variables:
+- `%GAME%` — Fallout 4 game folder
+- `%CK%` — Creation Kit / compiler folder
+- `%MY_GAMES%` — `Documents\My Games\Fallout4` (user-specific)
+
+Derived paths:
+- Compiler: `%CK%\Papyrus Compiler\PapyrusCompiler.exe`
+- Snapshot output: `%GAME%\SessionCoach_Snapshot.json`
+- Session events log: `%GAME%\SessionCoach_Events.jsonl`
 
 ## Log paths
 - F4SE + Hydra logs: `%MY_GAMES%\F4SE\`
@@ -68,7 +72,7 @@ Quick quit: `qqq`
 - Papyrus Compiler v2.8.0.4 — does NOT support struct arrays (`string[]`, `Var[]`, `int[]` as struct fields)
 - `stubs/Hydra/Events.psc` is our minimal compilation stub — all `*Args` structs that contained array fields replaced with `int iEmptyStruct = 0`. The Params structs (callback parameter types) are kept verbatim. Hydra's real `.pex` handles runtime; stub is compile-time only.
 - **Compiler quirk — import path staging**: The compiler derives script names from the common ancestor of all import paths. Two sibling directories under the same parent both being import paths causes name mangling (e.g. `src:SessionCoach` instead of `SessionCoach`). Solution: only `stubs\` is the repo-local import root; `SessionCoach.psc` is staged into the game's `Source\User\` (which is already an import path) for compilation, then removed.
-- Flags file: `D:\SteamLibrary\steamapps\common\Fallout 4 1946160\Data\Scripts\Source\Base\Institute_Papyrus_Flags.flg`
+- Flags file: `%CK%\Data\Scripts\Source\Base\Institute_Papyrus_Flags.flg`
 - Base game scripts (2403 files) extracted from CK `Base.zip` to game's `Data\Scripts\Source\` — required for compiler to resolve `Debug`, `Game`, `Actor`, etc.
 
 ## Architecture
@@ -83,54 +87,46 @@ Quick quit: `qqq`
 ### Session tracking model
 ```
 On Load:
-  → Register for: LocationEnterExit, LevelIncrease, QuestStageChange
-  → Write SessionCoach_SessionStart.json (current state for delta)
-  → Clear SessionCoach_Events.jsonl
+  → Register for all Hydra events (see OnPostLoadGameEvent)
+  → Write line 1 of SessionCoach_Events.jsonl: session_start (clears file first)
+    — includes level, SPECIAL, bobbleheads, ammo counts, aid counts
 
 During session:
   → Each event appends one JSON line to SessionCoach_Events.jsonl
     {"type":"location","name":"Goodneighbor","time":"14:32"}
-    {"type":"level","to":41,"time":"14:45"}
+    {"type":"kill","target":"Raider","killer":"","time":"14:45"}
 
 On Save:
-  → Capture current state
-  → Read SessionCoach_SessionStart.json (delta baseline)
-  → Read SessionCoach_Events.jsonl (named event stream)
-  → Write SessionCoach_Snapshot.json (full coaching document)
+  → Append final line: session_end (same schema as session_start)
+  → Full session = first line (session_start) + events + last line (session_end)
+  → Claude diffs session_start vs session_end for inventory/SPECIAL deltas
 ```
 
-### Snapshot format (target)
-```json
-{
-  "meta": { "generated": "2288-02-24", "level_at_start": 40 },
-  "character": {
-    "name": "Rhea", "level": 42, "location": "Goodneighbor",
-    "special": { "S": 11, "P": 7, "E": 4, "C": 7, "I": 8, "A": 6, "L": 7 }
-  },
-  "perks": [{ "name": "Rifleman", "rank": 3 }],
-  "session": {
-    "levels_gained": 2,
-    "xp_gained": 1250,
-    "new_perks": [{ "name": "Rifleman", "rank": 2 }, { "name": "Science", "rank": 1 }],
-    "quests_advanced": [{ "quest": "The Road to Freedom", "stage": 20 }],
-    "locations_visited": ["Diamond City", "Goodneighbor"]
-  }
-}
-```
+### Snapshot format (actual — JSONL)
+See README.md "Snapshot format" section for sample rows of every event type.
+Key event types: `session_start`, `session_end`, `location`, `near_collectible`,
+`found`, `used`, `kill`, `stat`, `quest`, `quest_stage`, `av_change`, `combat`,
+`limb`, `menu_mode`, `activate`, `container`, `destruction`, `objective`.
 
 ## Hydra API we use
 - `Hydra:IO:File.WriteAllLines(path, string[])` — overwrite file
 - `Hydra:IO:File.AppendLine(path, string)` — append one line (used for event stream)
-- `Hydra:IO:File.ReadAllLines(path)` — read back a file (used for delta at save time)
+- `Hydra:IO:File.ReadAllLines(path)` — read back a file
 - `Hydra:IO:File.Exists(path)` — check before reading
 - `Hydra:Time.GetGameYear/Month/Day/Hour/Minute()` — in-game calendar
-- `Hydra:Events.RegisterForLocationEnterExit/LevelIncrease/QuestStageChange(FunctionRef)` — event listeners
-- `Hydra:FunctionRefs.CreateGlobalRef(scriptName, functionName)` — creates a FunctionRef for a global function
+- `Hydra:Events.RegisterFor*(FunctionRef)` — event listeners (31 event types active)
+- `Hydra:FunctionRefs.CreateGlobalRef(scriptName, functionName)` — FunctionRef for a global function
+- `Hydra:TempSet.Add(namespace, key)` / `ContainsKey(namespace, key)` — in-memory set, resets on load; used for location dedup (namespace "sc_locations")
+- `Hydra:Forms:Cell.GetLocation(cell)` — resolves a cell to its named Location form
+- `Hydra:Forms:Actor.GetActorBase(actor)` — get ActorBase from Actor
+- `Hydra:Forms:ActorBase.GetPerks(actorBase)` — returns PerkRank[] (crashes at load time; safe via console trigger only)
+- `Hydra:Strings.Contains(str, substr)` — substring check
 
 ## Known Hydra issues
 - `Hydra:Forms:Form.GetName(actor)` crashes — use `actor.GetDisplayName()` for Actor/ObjectReference
-- `Location` is not a Form subtype in Papyrus — `loc as Form` is unsafe; location names currently skipped
-- `kSourceActor` in `LocationEnterExitParams` is unreliable when registered via global FunctionRef — do not compare against `Game.GetPlayer()`; filter on `kNewLocation == None` instead (None = exit event)
+- `Location` is not a Form subtype in Papyrus — `loc as Form` is unsafe; use `Hydra:Forms:Cell.GetLocation(cell)` then `loc.GetName()` instead
+- `LocationEnterExit` fires for ALL actors (NPC home locations) — replaced by `CellEnterExit` filtered to `kSourceActor == Game.GetPlayer()`
+- `Hydra:Forms:ActorBase.GetPerks()` crashes when called at load time (OnPostLoadGame context); safe when triggered from console via `cgf`
 
 ## Papyrus reserved name gotchas
 - `state` is a reserved keyword (case-insensitive, same as `State`/`EndState`) — use `sState`
@@ -140,15 +136,22 @@ On Save:
 
 ## What's proven working
 - Auto-trigger on load via Script Function Runner ✅
-- File writing via Hydra:IO:File.WriteAllLines ✅
-- File appending via Hydra:IO:File.AppendLine ✅
+- File writing via `Hydra:IO:File.WriteAllLines` ✅
+- File appending via `Hydra:IO:File.AppendLine` ✅
 - `player.GetDisplayName()` for player name ✅
-- Hydra:Time for in-game date/time ✅
-- SPECIAL stats via GetValue ✅
-- Global event callbacks via `Hydra:Events.RegisterForLocationEnterExit` + `CreateGlobalRef` ✅
-- `SessionCoach_SessionStart.json` written on load with level + SPECIAL in JSON ✅
-- 31 event types streaming to `SessionCoach_Events.jsonl` ✅
-- `stat` events (MiscStatChange) capture Objects Built, Creatures Killed, Caps, etc. ✅
+- `Hydra:Time` for in-game date/time ✅
+- SPECIAL stats via `GetValue` ✅
+- 31 event types streaming to `SessionCoach_Events.jsonl` via global `CreateGlobalRef` callbacks ✅
+- `session_start` written on load (clears JSONL), `session_end` appended on save ✅
+- `session_start`/`session_end` include: level, SPECIAL, bobbleheads, ammo counts, aid counts ✅
+- `CellEnterExit` filtered to player via `kSourceActor == Game.GetPlayer()` for location tracking ✅
+- `Hydra:Forms:Cell.GetLocation()` resolves interior cells to named Location ✅
+- `Hydra:TempSet` for location dedup across a session ✅
+- Bobblehead radar: `near_collectible` event + HUD notification when entering a bobblehead location ✅
+- `OnItemAddRemoveEvent`: `found` event for bobblehead pickup, `used` event for aid items ✅
+- `stat` events (`MiscStatChange`) capture Objects Built, Creatures Killed, Caps, etc. ✅
+- Ammo + aid inventory snapshot via `Game.GetForm()` + `GetItemCount()` (same pattern as bobbleheads) ✅
+- `av_change` events filtered to SPECIAL form IDs 706–712 ✅
 
 ## Event blacklist (too noisy, commented out)
 - `perk_run` (`PerkEntryRun`) — passive perk effects every calculation, 68K events/session
@@ -156,17 +159,16 @@ On Save:
 - `equip` (`ItemEquipUnequip`) — fires for NPCs too, unreliable for player gear
 
 ## ActorValueChange / SPECIAL tracking
-Do NOT register for `ActorValueChange` — fires constantly for health, AP, rad, etc.
-Instead: capture SPECIAL at load (`WriteSessionStart`) and at save (`OnPostSaveGame`), diff the two.
-This catches bobbleheads and any other SPECIAL change without streaming noise.
+We ARE registered for `ActorValueChange`, but filter to SPECIAL form IDs 706–712 only (Strength–Luck).
+All other AV changes (health, AP, rad, etc.) are dropped in the callback before logging.
+The `av_change` event fires on bobblehead pickup, capturing the before/after values.
 
 ## Layer roadmap
 - **Layer 1** ✅ SPECIAL, level, player name, auto-trigger on load, repo scaffolded
 - **Prove-out** ✅ Global Hydra event callbacks confirmed working
-- **Next**: JSON format, OnPostSaveGame trigger, session start/end model
-- **Layer 2**: Perks (named list + ranks), bobbleheads, magazines, settlements, active quests
-- **Layer 3**: Session delta — new perks, quests advanced, locations visited, XP gained, levels
-- **Later**: Holotape trigger, SessionCoach.esp
+- **Layer 2** ✅ session_start/end model, JSONL event stream, 31 event types, bobblehead radar, ammo+aid inventory snapshot
+- **Next**: Perks snapshot (DumpPerks works via console, needs safe call site), magazines, active quests
+- **Later**: Session delta summary, holotape trigger, SessionCoach.esp
 
 ## Mod dependencies (must be installed by end user)
 - F4SE (f4se.silverlock.org)
