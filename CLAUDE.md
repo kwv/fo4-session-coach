@@ -17,7 +17,7 @@ Target: community Nexus release. Design for any playstyle, any character.
 
 ## Repo
 ```
-/mnt/d/projects/session-coach/    ← source of truth
+fallout4/    ← source of truth
   src/LudoTrace.psc            ← main script
   stubs/Hydra/Events.psc          ← minimal compilation stub (see Compiler notes)
   dist/Data/Scripts/LudoTrace.pex

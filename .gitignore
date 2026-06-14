@@ -9,3 +9,5 @@ Thumbs.db
 .vscode/
 *.swp
 referenceIds.tsv
+
+docs/intro.md
