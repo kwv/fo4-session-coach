@@ -192,13 +192,13 @@ EndFunction
 
 ; -----------------------------------------------------------------------
 ; WriteSessionStart — captures baseline state on load, clears event log.
-; Console: cgf "SessionCoach.WriteSessionStart"
+; Console: cgf "LudoTrace.WriteSessionStart"
 ; -----------------------------------------------------------------------
 Function WriteSessionStart() Global
     string[] lines = new string[1]
     lines[0] = BuildStateJson("session_start")
     Hydra:IO:File.WriteAllLines("LudoTrace_Events.jsonl", lines)
-    Debug.Notification("[Session Coach] Loaded")
+    Debug.Notification("[LudoTrace] Loaded")
 EndFunction
 
 ; -----------------------------------------------------------------------
@@ -206,7 +206,7 @@ EndFunction
 ; -----------------------------------------------------------------------
 Function OnPostSaveGameEvent(Hydra:Events:PostSaveGameParams akParams) Global
     Log(BuildStateJson("session_end"))
-    Debug.Notification("[Session Coach] Session saved")
+    Debug.Notification("[LudoTrace] Session saved")
 EndFunction
 
 ; -----------------------------------------------------------------------
@@ -214,7 +214,7 @@ EndFunction
 ; -----------------------------------------------------------------------
 ; DebugAVIds — logs form IDs for all 7 SPECIAL AVs so we can check
 ; if they're contiguous and build an efficient range filter.
-; Console: cgf "SessionCoach.DebugAVIds"
+; Console: cgf "LudoTrace.DebugAVIds"
 ; -----------------------------------------------------------------------
 Function DebugAVIds() Global
     string[] lines = new string[7]
@@ -225,55 +225,55 @@ Function DebugAVIds() Global
     lines[4] = "Intelligence= " + Game.GetIntelligenceAV().GetFormID()
     lines[5] = "Agility     = " + Game.GetAgilityAV().GetFormID()
     lines[6] = "Luck        = " + Game.GetLuckAV().GetFormID()
-    Hydra:IO:File.WriteAllLines("SessionCoach_AVIds.txt", lines)
-    Debug.Notification("[Session Coach] AV IDs written")
+    Hydra:IO:File.WriteAllLines("LudoTrace_AVIds.txt", lines)
+    Debug.Notification("[LudoTrace] AV IDs written")
 EndFunction
 
 ; -----------------------------------------------------------------------
 Function OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams akParams) Global
     ; LocationEnterExit fires for all actors (NPC home locations) — replaced by CellEnterExit filtered to player
-    ; Hydra:Events.RegisterForLocationEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationEnterExitEvent"))
-    ; Hydra:Events.RegisterForLocationLoad(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLocationLoadEvent"))
-    Hydra:Events.RegisterForLevelIncrease(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLevelIncreaseEvent"))
-    Hydra:Events.RegisterForQuestStageChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnQuestStageChangeEvent"))
-    Hydra:Events.RegisterForQuestStartStop(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnQuestStartStopEvent"))
-    Hydra:Events.RegisterForQuestObjectiveChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnQuestObjectiveChangeEvent"))
-    Hydra:Events.RegisterForActorDeath(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActorDeathEvent"))
-    Hydra:Events.RegisterForMiscStatChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnMiscStatChangeEvent"))
-    Hydra:Events.RegisterForBookRead(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnBookReadEvent"))
-    Hydra:Events.RegisterForLockPick(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLockPickEvent"))
-    Hydra:Events.RegisterForTerminalHack(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnTerminalHackEvent"))
+    ; Hydra:Events.RegisterForLocationEnterExit(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLocationEnterExitEvent"))
+    ; Hydra:Events.RegisterForLocationLoad(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLocationLoadEvent"))
+    Hydra:Events.RegisterForLevelIncrease(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLevelIncreaseEvent"))
+    Hydra:Events.RegisterForQuestStageChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnQuestStageChangeEvent"))
+    Hydra:Events.RegisterForQuestStartStop(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnQuestStartStopEvent"))
+    Hydra:Events.RegisterForQuestObjectiveChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnQuestObjectiveChangeEvent"))
+    Hydra:Events.RegisterForActorDeath(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnActorDeathEvent"))
+    Hydra:Events.RegisterForMiscStatChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnMiscStatChangeEvent"))
+    Hydra:Events.RegisterForBookRead(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnBookReadEvent"))
+    Hydra:Events.RegisterForLockPick(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLockPickEvent"))
+    Hydra:Events.RegisterForTerminalHack(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnTerminalHackEvent"))
     ; equip: fires for NPCs too (enemy attacks, etc.) — not reliable for player gear
-    ; Hydra:Events.RegisterForItemEquipUnequip(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnItemEquipUnequipEvent"))
-    Hydra:Events.RegisterForItemAddRemove(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnItemAddRemoveEvent"))
-    Hydra:Events.RegisterForCombatStateChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnCombatStateChangeEvent"))
-    Hydra:Events.RegisterForPerkPointIncrease(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnPerkPointIncreaseEvent"))
+    ; Hydra:Events.RegisterForItemEquipUnequip(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnItemEquipUnequipEvent"))
+    Hydra:Events.RegisterForItemAddRemove(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnItemAddRemoveEvent"))
+    Hydra:Events.RegisterForCombatStateChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnCombatStateChangeEvent"))
+    Hydra:Events.RegisterForPerkPointIncrease(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnPerkPointIncreaseEvent"))
     ; perk_run: fires for passive perk effects every calculation — not perk selection, useless
-    ; Hydra:Events.RegisterForPerkEntryRun(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnPerkEntryRunEvent"))
-    Hydra:Events.RegisterForSleepStartStop(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnSleepStartStopEvent"))
-    Hydra:Events.RegisterForWaitStartStop(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnWaitStartStopEvent"))
-    Hydra:Events.RegisterForObjectSell(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectSellEvent"))
-    Hydra:Events.RegisterForObjectHarvest(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectHarvestEvent"))
-    Hydra:Events.RegisterForMenuModeEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnMenuModeEnterExitEvent"))
-    Hydra:Events.RegisterForMenuOpenClose(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnMenuOpenCloseCB"))
-    Hydra:Events.RegisterForDifficultyChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnDifficultyChangeEvent"))
+    ; Hydra:Events.RegisterForPerkEntryRun(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnPerkEntryRunEvent"))
+    Hydra:Events.RegisterForSleepStartStop(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnSleepStartStopEvent"))
+    Hydra:Events.RegisterForWaitStartStop(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnWaitStartStopEvent"))
+    Hydra:Events.RegisterForObjectSell(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnObjectSellEvent"))
+    Hydra:Events.RegisterForObjectHarvest(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnObjectHarvestEvent"))
+    Hydra:Events.RegisterForMenuModeEnterExit(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnMenuModeEnterExitEvent"))
+    Hydra:Events.RegisterForMenuOpenClose(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnMenuOpenCloseCB"))
+    Hydra:Events.RegisterForDifficultyChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnDifficultyChangeEvent"))
     ; life_state: actors loading into world in dead state — not session kills
-    ; Hydra:Events.RegisterForLifeStateChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLifeStateChangeEvent"))
-    Hydra:Events.RegisterForLimbCripple(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnLimbCrippleEvent"))
+    ; Hydra:Events.RegisterForLifeStateChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLifeStateChangeEvent"))
+    Hydra:Events.RegisterForLimbCripple(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnLimbCrippleEvent"))
     ; furniture: NPC chairs/couches fire constantly, no player signal
-    ; Hydra:Events.RegisterForFurnitureEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnFurnitureEnterExitEvent"))
-    Hydra:Events.RegisterForObjectActivate(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectActivateEvent"))
-    Hydra:Events.RegisterForSpellCast(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnSpellCastEvent"))
+    ; Hydra:Events.RegisterForFurnitureEnterExit(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnFurnitureEnterExitEvent"))
+    Hydra:Events.RegisterForObjectActivate(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnObjectActivateEvent"))
+    Hydra:Events.RegisterForSpellCast(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnSpellCastEvent"))
     ; trigger: invisible volumes, pure noise
-    ; Hydra:Events.RegisterForTriggerEnterLeave(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnTriggerEnterLeaveEvent"))
-    Hydra:Events.RegisterForObjectOpenClose(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectOpenCloseEvent"))
-    Hydra:Events.RegisterForObjectGrabRelease(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnObjectGrabReleaseEvent"))
-    Hydra:Events.RegisterForDestructionStageChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnDestructionStageChangeEvent"))
-    Hydra:Events.RegisterForCellEnterExit(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnCellEnterExitEvent"))
+    ; Hydra:Events.RegisterForTriggerEnterLeave(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnTriggerEnterLeaveEvent"))
+    Hydra:Events.RegisterForObjectOpenClose(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnObjectOpenCloseEvent"))
+    Hydra:Events.RegisterForObjectGrabRelease(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnObjectGrabReleaseEvent"))
+    Hydra:Events.RegisterForDestructionStageChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnDestructionStageChangeEvent"))
+    Hydra:Events.RegisterForCellEnterExit(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnCellEnterExitEvent"))
     ; effect: applied/removed fires for NPCs constantly — turrets, companions, enemies
-    ; Hydra:Events.RegisterForActiveEffectApplyRemove(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActiveEffectApplyRemoveEvent"))
+    ; Hydra:Events.RegisterForActiveEffectApplyRemove(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnActiveEffectApplyRemoveEvent"))
     ; SPECIAL range 706-712 confirmed contiguous — catches bobbleheads, You're SPECIAL!, Intense Training
-    Hydra:Events.RegisterForActorValueChange(Hydra:FunctionRefs.CreateGlobalRef("SessionCoach", "OnActorValueChangeEvent"))
+    Hydra:Events.RegisterForActorValueChange(Hydra:FunctionRefs.CreateGlobalRef("LudoTrace", "OnActorValueChangeEvent"))
 
     WriteSessionStart()
 EndFunction
@@ -439,7 +439,7 @@ Function OnLocationEnterExitEvent(Hydra:Events:LocationEnterExitParams akParams)
     string bobblehead = BobbleheadAtLocation(name)
     if bobblehead != "" && !PlayerHasBobblehead(bobblehead)
         Log("{\"type\":\"near_collectible\",\"category\":\"bobblehead\",\"name\":\"" + bobblehead + "\",\"location\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
-        Debug.Notification("[Session Coach] Bobblehead nearby: " + bobblehead)
+        Debug.Notification("[LudoTrace] Bobblehead nearby: " + bobblehead)
     endif
     Log("{\"type\":\"location\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
@@ -712,7 +712,7 @@ Function OnCellEnterExitEvent(Hydra:Events:CellEnterExitParams akParams) Global
     string bobblehead = BobbleheadAtLocation(name)
     if bobblehead != "" && !PlayerHasBobblehead(bobblehead)
         Log("{\"type\":\"near_collectible\",\"category\":\"bobblehead\",\"name\":\"" + bobblehead + "\",\"location\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
-        Debug.Notification("[Session Coach] Bobblehead nearby: " + bobblehead)
+        Debug.Notification("[LudoTrace] Bobblehead nearby: " + bobblehead)
     endif
     Log("{\"type\":\"location\",\"name\":\"" + name + "\",\"time\":\"" + GameTime() + "\"}")
 EndFunction
