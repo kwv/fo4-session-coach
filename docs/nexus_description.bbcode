@@ -1,4 +1,4 @@
-FO4 Session Coach is a session logger for Fallout 4. It records your character state, kills, quests, locations, inventory changes, and combat events to a structured log file every time you save — then you paste that log into Claude.ai and get a personalized coaching session back.
+FO4 LudoTrace is a session logger for Fallout 4. It records your character state, kills, quests, locations, inventory changes, and combat events to a structured log file every time you save — then you paste that log into Claude.ai and get a personalized coaching session back.
 
 No API key. No account beyond a free Claude.ai login. No ESP, no MCM, no holotape.
 
@@ -7,22 +7,37 @@ No API key. No account beyond a free Claude.ai login. No ESP, no MCM, no holotap
 Every session captures:
 
 [list]
-[*]Character snapshot at start and end — level, SPECIAL, bobbleheads collected, ammo counts, aid inventory
-[*]Locations visited (deduped — each location logged once per session)
-[*]Kills — target name, killer (you or a companion), in-game time
-[*]Legendary enemy kills and loot examinations
-[*]Quest stage changes and completions
-[*]Bobblehead proximity alerts — notified when you enter a bobblehead location
-[*]SPECIAL changes (bobblehead pickups, disease effects)
-[*]Aid item and chem usage
-[*]Misc stats — caps found, creatures killed, items scrapped, chests looted, and more
-[*]Combat state changes for you and companions
-[*]Limb cripple and heal events
+[*]Character snapshot at start and end — level, SPECIAL, bobbleheads collected, ammo counts, aid inventory[/*]
+[*]Locations visited (deduped — each location logged once per session)[/*]
+[*]Kills — target name, killer (you or a companion), in-game time[/*]
+[*]Legendary enemy kills and loot examinations[/*]
+[*]Quest stage changes and completions[/*]
+[*]Bobblehead proximity alerts — notified when you enter a bobblehead location[/*]
+[*]SPECIAL changes (bobblehead pickups, disease effects)[/*]
+[*]Aid item and chem usage[/*]
+[*]Misc stats — caps found, creatures killed, items scrapped, chests looted, and more[/*]
+[*]Combat state changes for you and companions[/*]
+[*]Limb cripple and heal events[/*]
 [/list]
 
 The log is plain JSONL (one JSON object per line) written to:
 
-[code]Fallout 4\SessionCoach_Events.jsonl[/code]
+[code]Fallout 4\LudoTrace_Events.jsonl[/code]
+example:
+
+ 
+[code]{"type":"session_start","date":"2288-02-28","time":"07:50","level":40,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":{"Mini Nuke":14,"Plasma Cartridge":912,"Fusion Cell":95,"5mm Round":1842},"aid":{"Stimpak":252,"Jet":3,"Stealth Boy":2}}
+{"type":"location","name":"Vault 88","time":"18:17"}
+{"type":"kill","target":"Mole Rat Brood Mother","killer":"Rhea","time":"18:40"}
+{"type":"near_collectible","category":"bobblehead","name":"Endurance","location":"Poseidon Energy Turbine 18-F","time":"18:55"}
+{"type":"av_change","av":"Perception","from":7,"to":1,"time":"19:04"}
+{"type":"quest_stage","quest":"Explore Vault 88","stage":150,"time":"20:14"}
+{"type":"kill","target":"Legendary Alpha Deathclaw","killer":"Rhea","time":"22:38"}
+{"type":"stat","stat":"Stimpaks Taken","value":187,"time":"22:38"}
+{"type":"used","category":"chem","item":"Jet","time":"01:52"}
+{"type":"kill","target":"Mirelurk Queen","killer":"Rhea","time":"00:57"}
+{"type":"perk_point","total":5,"time":"00:57"}
+{"type":"session_end","date":"2288-02-28","time":"03:40","level":40,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":{"Mini Nuke":14,"Plasma Cartridge":912,"Fusion Cell":79,"5mm Round":1279},"aid":{"Stimpak":250,"Jet":3,"Stealth Boy":2}}[/code]
 
 You can read it, parse it, or feed it into any tool you like. The Claude.ai coaching workflow is built in, but the log is yours.
 
@@ -32,11 +47,11 @@ You can read it, parse it, or feed it into any tool you like. The Claude.ai coac
 
 [b]2. Open Claude.ai.[/b] Start a new chat at claude.ai (free account).
 
-[b]3. Paste the prompt + your log.[/b] A coaching prompt is included as [font=Courier New]coaching_prompt.md[/font] in the zip. Paste it, then paste the contents of [font=Courier New]SessionCoach_Events.jsonl[/font] below it.
+[b]3. Paste the prompt + your log.[/b] A coaching prompt is included as [font=Courier New]coaching_prompt.md[/font] in the zip. Paste it, then paste the contents of [font=Courier New]LudoTrace_Events.jsonl[/font] below it.
 
 [b]4. Get coaching.[/b] Claude reads your session and gives you specific, actionable feedback based on what actually happened — not generic tips.
 
-[size=5][b]Example output[/b][/size]
+[size=5][b]Example output when piped through Claude[/b][/size]
 
 [i](From a real session — level 40 character in Vault 88)[/i]
 
@@ -51,15 +66,12 @@ The coaching references your actual inventory, your actual kills, your actual qu
 [size=5][b]Requirements[/b][/size]
 
 [list]
-[*][url=https://f4se.silverlock.org/]F4SE[/url]
-[*][url=https://www.nexusmods.com/fallout4/mods/104159]Hydra[/url]
-[*][url=https://www.nexusmods.com/fallout4/mods/47327]Address Library for F4SE Plugins[/url]
+[*][url=https://f4se.silverlock.org/]F4SE[/url][/*]
+[*][url=https://www.nexusmods.com/fallout4/mods/104159]Hydra[/url][/*]
+[*][url=https://www.nexusmods.com/fallout4/mods/47327]Address Library for F4SE Plugins[/url][/*]
 [/list]
 
 [size=5][b]Install[/b][/size]
 
 Drop the contents of the zip into your Fallout 4 [font=Courier New]Data\[/font] folder, or install via Vortex or Mod Organizer 2.
 
-[size=5][b]Source[/b][/size]
-
-[url=https://github.com/kwv/fo4-session-coach]github.com/kwv/fo4-session-coach[/url]

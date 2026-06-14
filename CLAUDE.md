@@ -1,4 +1,4 @@
-# FO4 Session Coach — Project Context
+# FO4 LudoTrace — Project Context
 
 ## What we're building
 A Fallout 4 mod that writes a JSON character snapshot after each play session.
@@ -18,10 +18,10 @@ Target: community Nexus release. Design for any playstyle, any character.
 ## Repo
 ```
 /mnt/d/projects/session-coach/    ← source of truth
-  src/SessionCoach.psc            ← main script
+  src/LudoTrace.psc            ← main script
   stubs/Hydra/Events.psc          ← minimal compilation stub (see Compiler notes)
-  dist/Data/Scripts/SessionCoach.pex
-  dist/Data/Hydra/ScriptFunctions/SessionCoach.json
+  dist/Data/Scripts/LudoTrace.pex
+  dist/Data/Hydra/ScriptFunctions/LudoTrace.json
   Makefile                        ← build/run from WSL (make build, make run)
   tools/compile.bat               ← build + deploy (called by Makefile or double-click)
   tools/run.bat                   ← launches f4se_loader.exe (called by Makefile)
@@ -39,8 +39,8 @@ All machine-specific paths live in `tools/paths.local.bat` (gitignored). Variabl
 
 Derived paths:
 - Compiler: `%CK%\Papyrus Compiler\PapyrusCompiler.exe`
-- Snapshot output: `%GAME%\SessionCoach_Snapshot.json`
-- Session events log: `%GAME%\SessionCoach_Events.jsonl`
+- Snapshot output: `%GAME%\LudoTrace_Snapshot.json`
+- Session events log: `%GAME%\LudoTrace_Events.jsonl`
 
 ## Log paths
 - F4SE + Hydra logs: `%MY_GAMES%\F4SE\`
@@ -59,26 +59,26 @@ bLoadDebugInformation=1
 ## Build process
 From WSL: `make build` (compile + deploy) or `make run` (launch game) or `make build run`.
 From Windows: double-click `tools/compile.bat`. It:
-1. Copies `src/SessionCoach.psc` into the game's `Source\User\` (staging — see Compiler notes)
+1. Copies `src/LudoTrace.psc` into the game's `Source\User\` (staging — see Compiler notes)
 2. Compiles with import path: `stubs\` → `game Source\User\` → `game Source\`
-3. Outputs `SessionCoach.pex` to `dist/Data/Scripts/`
+3. Outputs `LudoTrace.pex` to `dist/Data/Scripts/`
 4. Deploys `dist/Data/` into the game's `Data/` folder
 5. Removes the staged source file
 
-Console test: `cgf "SessionCoach.WriteSessionStart"` (close console first to see HUD notification)
+Console test: `cgf "LudoTrace.WriteSessionStart"` (close console first to see HUD notification)
 Quick quit: `qqq`
 
 ## Compiler notes
 - Papyrus Compiler v2.8.0.4 — does NOT support struct arrays (`string[]`, `Var[]`, `int[]` as struct fields)
 - `stubs/Hydra/Events.psc` is our minimal compilation stub — all `*Args` structs that contained array fields replaced with `int iEmptyStruct = 0`. The Params structs (callback parameter types) are kept verbatim. Hydra's real `.pex` handles runtime; stub is compile-time only.
-- **Compiler quirk — import path staging**: The compiler derives script names from the common ancestor of all import paths. Two sibling directories under the same parent both being import paths causes name mangling (e.g. `src:SessionCoach` instead of `SessionCoach`). Solution: only `stubs\` is the repo-local import root; `SessionCoach.psc` is staged into the game's `Source\User\` (which is already an import path) for compilation, then removed.
+- **Compiler quirk — import path staging**: The compiler derives script names from the common ancestor of all import paths. Two sibling directories under the same parent both being import paths causes name mangling (e.g. `src:LudoTrace` instead of `LudoTrace`). Solution: only `stubs\` is the repo-local import root; `LudoTrace.psc` is staged into the game's `Source\User\` (which is already an import path) for compilation, then removed.
 - Flags file: `%CK%\Data\Scripts\Source\Base\Institute_Papyrus_Flags.flg`
 - Base game scripts (2403 files) extracted from CK `Base.zip` to game's `Data\Scripts\Source\` — required for compiler to resolve `Debug`, `Game`, `Actor`, etc.
 
 ## Architecture
 
 ### Triggers (no ESP needed)
-- Hydra Script Function Runner calls global Papyrus functions on game events via `dist/Data/Hydra/ScriptFunctions/SessionCoach.json`
+- Hydra Script Function Runner calls global Papyrus functions on game events via `dist/Data/Hydra/ScriptFunctions/LudoTrace.json`
 - Hydra:Events supports global FunctionRefs — event callbacks can be registered from global functions, no persistent script object needed
 - **OnPostLoadGame** → `OnPostLoadGameEvent(Hydra:Events:PostLoadGameParams)` — registers all session event listeners, writes session-start state
 - **OnPostSaveGame** → `OnPostSaveGameEvent(Hydra:Events:PostSaveGameParams)` — reads session-start state, reads events log, writes combined snapshot
@@ -88,11 +88,11 @@ Quick quit: `qqq`
 ```
 On Load:
   → Register for all Hydra events (see OnPostLoadGameEvent)
-  → Write line 1 of SessionCoach_Events.jsonl: session_start (clears file first)
+  → Write line 1 of LudoTrace_Events.jsonl: session_start (clears file first)
     — includes level, SPECIAL, bobbleheads, ammo counts, aid counts
 
 During session:
-  → Each event appends one JSON line to SessionCoach_Events.jsonl
+  → Each event appends one JSON line to LudoTrace_Events.jsonl
     {"type":"location","name":"Goodneighbor","time":"14:32"}
     {"type":"kill","target":"Raider","killer":"","time":"14:45"}
 
@@ -141,7 +141,7 @@ Key event types: `session_start`, `session_end`, `location`, `near_collectible`,
 - `player.GetDisplayName()` for player name ✅
 - `Hydra:Time` for in-game date/time ✅
 - SPECIAL stats via `GetValue` ✅
-- 31 event types streaming to `SessionCoach_Events.jsonl` via global `CreateGlobalRef` callbacks ✅
+- 31 event types streaming to `LudoTrace_Events.jsonl` via global `CreateGlobalRef` callbacks ✅
 - `session_start` written on load (clears JSONL), `session_end` appended on save ✅
 - `session_start`/`session_end` include: level, SPECIAL, bobbleheads, ammo counts, aid counts ✅
 - `CellEnterExit` filtered to player via `kSourceActor == Game.GetPlayer()` for location tracking ✅
@@ -168,7 +168,7 @@ The `av_change` event fires on bobblehead pickup, capturing the before/after val
 - **Prove-out** ✅ Global Hydra event callbacks confirmed working
 - **Layer 2** ✅ session_start/end model, JSONL event stream, 31 event types, bobblehead radar, ammo+aid inventory snapshot
 - **Next**: Perks snapshot (DumpPerks works via console, needs safe call site), magazines, active quests
-- **Later**: Session delta summary, holotape trigger, SessionCoach.esp
+- **Later**: Session delta summary, holotape trigger, LudoTrace.esp
 
 ## Mod dependencies (must be installed by end user)
 - F4SE (f4se.silverlock.org)

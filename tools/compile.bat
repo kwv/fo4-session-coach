@@ -2,7 +2,7 @@
 setlocal
 
 :: -----------------------------------------------------------------------
-:: Session Coach — build + deploy script
+:: LudoTrace — build + deploy script
 ::
 :: Requires tools\paths.local.bat (copy from paths.example.bat).
 :: Double-click from Windows Explorer or run from any directory.
@@ -36,23 +36,23 @@ set OUT=%REPO%\dist\Data\Scripts
 ::
 :: stubs\ still takes priority over Source\User for Hydra\Events.psc, which
 :: is what lets our minimal stub shadow Hydra's original.
-copy /y "%REPO%\src\SessionCoach.psc" "%GAME_USER%\SessionCoach.psc" >nul
+copy /y "%REPO%\src\LudoTrace.psc" "%GAME_USER%\LudoTrace.psc" >nul
 
 echo.
-echo [Session Coach] Compiling src\SessionCoach.psc ...
+echo [LudoTrace] Compiling src\LudoTrace.psc ...
 echo.
 
 :: Import path order:
 ::   1. stubs\           — our Hydra:Events stub (shadows the real one)
-::   2. game Source\User — staged SessionCoach.psc + remaining Hydra sources
+::   2. game Source\User — staged LudoTrace.psc + remaining Hydra sources
 ::   3. game Source\     — base game scripts (Actor, Game, Debug, etc.)
 
-"%COMPILER%" "%GAME_USER%\SessionCoach.psc" ^
+"%COMPILER%" "%GAME_USER%\LudoTrace.psc" ^
     -f="%FLAGS%" ^
     -i="%STUBS%;%GAME_USER%;%GAME_SRC%" ^
     -o="%OUT%"
 
-del "%GAME_USER%\SessionCoach.psc" >nul
+del "%GAME_USER%\LudoTrace.psc" >nul
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
@@ -63,16 +63,16 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [Session Coach] Deploying to game folder...
+echo [LudoTrace] Deploying to game folder...
 echo.
 
 xcopy /s /y "%REPO%\dist\Data\*" "%GAME%\Data\" >nul
 
 echo [OK] Deployed:
-echo      %GAME%\Data\Scripts\SessionCoach.pex
-echo      %GAME%\Data\Hydra\ScriptFunctions\SessionCoach.json
+echo      %GAME%\Data\Scripts\LudoTrace.pex
+echo      %GAME%\Data\Hydra\ScriptFunctions\LudoTrace.json
 echo.
 echo To test: launch via f4se_loader.exe, load a save.
-echo Console: cgf "SessionCoach.WriteSnapshot"
+echo Console: cgf "LudoTrace.WriteSnapshot"
 echo.
 pause

@@ -1,4 +1,4 @@
-Scriptname SessionCoach
+Scriptname LudoTrace
 
 ; -----------------------------------------------------------------------
 ; ZeroPad — zero-pad a single-digit int to two digits

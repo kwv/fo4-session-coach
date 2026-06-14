@@ -2,12 +2,12 @@
     "globalFunctions": [
         {
             "eventName": "OnPostLoadGame",
-            "scriptName": "SessionCoach",
+            "scriptName": "LudoTrace",
             "functionName": "OnPostLoadGameEvent"
         },
         {
             "eventName": "OnPostSaveGame",
-            "scriptName": "SessionCoach",
+            "scriptName": "LudoTrace",
             "functionName": "OnPostSaveGameEvent"
         }
     ]

@@ -57,7 +57,7 @@ f_quote_b  = font(f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf",    30)
 f_small    = font(f"{FONT_DIR}/dejavu/DejaVuSansMono.ttf",    19)
 
 # --- title ---
-title = "FO4 SESSION COACH"
+title = "LUDOTRACE"
 draw.text((120, 110), title, font=f_title, fill=AMBER)
 
 # --- amber underline under title ---
@@ -65,14 +65,14 @@ bbox = draw.textbbox((120, 110), title, font=f_title)
 draw.rectangle([120, bbox[3] + 8, bbox[2], bbox[3] + 11], fill=AMBER_DIM)
 
 # --- subtitle ---
-draw.text((124, bbox[3] + 24), "A session logger for Fallout 4", font=f_subtitle, fill=DIM_TEXT)
+draw.text((124, bbox[3] + 24), "Session black box for Fallout 4", font=f_subtitle, fill=DIM_TEXT)
 
 # --- divider before quotes ---
 div_y = 340
 draw.rectangle([120, div_y, W - 120, div_y + 1], fill=AMBER_DIM)
 
 # --- "EXAMPLE OUTPUT" label ---
-draw.text((120, div_y + 16), "EXAMPLE  COACHING  OUTPUT", font=f_label, fill=AMBER_DIM)
+draw.text((120, div_y + 16), "EXAMPLE  AI  OUTPUT", font=f_label, fill=AMBER_DIM)
 
 # --- quote lines ---
 # Each entry: (bold_prefix, normal_suffix)
@@ -165,7 +165,7 @@ tagline = "Logs kills · quests · locations · inventory · combat events · SP
 draw.text((120, H - 110), tagline, font=f_small, fill=DIM_TEXT)
 
 # --- github url bottom right ---
-url = "github.com/kwv/fo4-session-coach"
+url = "github.com/ludotrace/fallout4"
 uw = draw.textlength(url, font=f_small)
 draw.text((W - 120 - uw, H - 110), url, font=f_small, fill=AMBER_DIM)
 
