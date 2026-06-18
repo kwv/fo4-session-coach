@@ -4,12 +4,20 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v0.3.0)'
+        required: true
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
+    env:
+      VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
     steps:
       - uses: actions/checkout@v4
@@ -22,20 +30,21 @@ jobs:
           cp -r dist/Data release_staging/Data
           cp docs/coaching_prompt.md release_staging/coaching_prompt.md
           cd release_staging
-          zip -r "../LudoTrace-FO4-${{ github.ref_name }}.zip" .
+          zip -r "../LudoTrace-FO4-${{ env.VERSION }}.zip" .
           cd ..
 
       - name: Create GitHub Release
         id: gh_release
         uses: softprops/action-gh-release@v2
         with:
-          files: LudoTrace-FO4-${{ github.ref_name }}.zip
+          tag_name: ${{ env.VERSION }}
+          files: LudoTrace-FO4-${{ env.VERSION }}.zip
           generate_release_notes: true
 
       - name: Update CHANGELOG.md
         id: changelog
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ env.VERSION }}"
           DATE=$(date -u +%Y-%m-%d)
           NOTES="${{ steps.gh_release.outputs.body }}"
 
@@ -53,7 +62,6 @@ jobs:
           git commit -m "Update CHANGELOG.md for $VERSION [skip ci]"
           git push origin HEAD:main
 
-          # Capture just the current entry for Nexus
           echo "entry<<EOF" >> "$GITHUB_OUTPUT"
           printf '## %s — %s\n\n%s\n' "$VERSION" "$DATE" "$NOTES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -63,7 +71,7 @@ jobs:
         run: |
           {
             echo "description<<EOF"
-            printf '[size=5][b]Changelog — %s[/b][/size]\n\n' "${{ github.ref_name }}"
+            printf '[size=5][b]Changelog — %s[/b][/size]\n\n' "${{ env.VERSION }}"
             echo "${{ steps.changelog.outputs.entry }}"
             echo ""
             cat docs/nexus_description.bbcode
@@ -75,8 +83,8 @@ jobs:
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
           file_id: ${{ vars.NEXUSMODS_GROUP_ID }}
-          filename: LudoTrace-FO4-${{ github.ref_name }}.zip
-          version: ${{ github.ref_name }}
-          display_name: LudoTrace FO4 ${{ github.ref_name }}
+          filename: LudoTrace-FO4-${{ env.VERSION }}.zip
+          version: ${{ env.VERSION }}
+          display_name: LudoTrace FO4 ${{ env.VERSION }}
           description: ${{ steps.nexus_desc.outputs.description }}
           archive_existing_version: true
