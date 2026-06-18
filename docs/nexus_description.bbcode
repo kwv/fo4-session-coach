@@ -24,22 +24,21 @@ Every session captures:
 
 The log is plain JSONL (one JSON object per line) written to:
 
-[code]Fallout 4\LudoTrace_Events.jsonl[/code]
+[code]Fallout 4\lt_fo4_events.jsonl[/code]
 example:
 
- 
-[code]{"type":"session_start","date":"2288-02-28","time":"07:50","level":40,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":{"Mini Nuke":14,"Plasma Cartridge":912,"Fusion Cell":95,"5mm Round":1842},"aid":{"Stimpak":252,"Jet":3,"Stealth Boy":2}}
+[code]{"type":"session_start","date":"2288-02-28","time":"07:50","level":40,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":[{"name":"Mini Nuke","form_id":"0x000E6B2E","count":14},{"name":"Plasma Cartridge","form_id":"0x0001DBB7","count":912}],"aid":[{"name":"Stimpak","form_id":"0x00023736","count":252},{"name":"Jet","form_id":"0x000366C5","count":3}]}
 {"type":"location","name":"Vault 88","time":"18:17"}
 {"type":"kill","target":"Mole Rat Brood Mother","killer":"Rhea","time":"18:40"}
 {"type":"near_collectible","category":"bobblehead","name":"Endurance","location":"Poseidon Energy Turbine 18-F","time":"18:55"}
 {"type":"av_change","av":"Perception","from":7,"to":1,"time":"19:04"}
+{"type":"level","to":41,"perks":[{"name":"Rifleman","rank":3},{"name":"Sneak","rank":2}],"time":"19:30"}
 {"type":"quest_stage","quest":"Explore Vault 88","stage":150,"time":"20:14"}
 {"type":"kill","target":"Legendary Alpha Deathclaw","killer":"Rhea","time":"22:38"}
 {"type":"stat","stat":"Stimpaks Taken","value":187,"time":"22:38"}
 {"type":"used","category":"chem","item":"Jet","time":"01:52"}
 {"type":"kill","target":"Mirelurk Queen","killer":"Rhea","time":"00:57"}
-{"type":"perk_point","total":5,"time":"00:57"}
-{"type":"session_end","date":"2288-02-28","time":"03:40","level":40,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":{"Mini Nuke":14,"Plasma Cartridge":912,"Fusion Cell":79,"5mm Round":1279},"aid":{"Stimpak":250,"Jet":3,"Stealth Boy":2}}[/code]
+{"type":"session_end","date":"2288-02-28","time":"03:40","level":41,"name":"Rhea","special":{"S":11,"P":7,"E":4,"C":7,"I":8,"A":6,"L":7},"bobbleheads":["Charisma","Intelligence","Strength"],"ammo":[{"name":"Mini Nuke","form_id":"0x000E6B2E","count":14},{"name":"Plasma Cartridge","form_id":"0x0001DBB7","count":912}],"aid":[{"name":"Stimpak","form_id":"0x00023736","count":250},{"name":"Jet","form_id":"0x000366C5","count":3}]}[/code]
 
 You can read it, parse it, or feed it into any tool you like. The Claude.ai coaching workflow is built in, but the log is yours.
 
@@ -49,7 +48,7 @@ You can read it, parse it, or feed it into any tool you like. The Claude.ai coac
 
 [b]2. Open Claude.ai.[/b] Start a new chat at claude.ai (free account).
 
-[b]3. Paste the prompt + your log.[/b] A coaching prompt is included as [font=Courier New]coaching_prompt.md[/font] in the zip. Paste it, then paste the contents of [font=Courier New]LudoTrace_Events.jsonl[/font] below it.
+[b]3. Paste the prompt + your log.[/b] A coaching prompt is included as [font=Courier New]coaching_prompt.md[/font] in the zip. Paste it, then paste the contents of [font=Courier New]lt_fo4_events.jsonl[/font] below it.
 
 [b]4. Get coaching.[/b] Claude reads your session and gives you specific, actionable feedback based on what actually happened — not generic tips.
 

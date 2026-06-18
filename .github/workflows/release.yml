@@ -30,13 +30,25 @@ jobs:
           files: LudoTrace-FO4-${{ github.ref_name }}.zip
           generate_release_notes: true
 
+      - name: Build Nexus description
+        id: nexus_desc
+        run: |
+          {
+            echo "description<<EOF"
+            printf '[size=5][b]Changelog — %s[/b][/size]\n\n' "${{ github.ref_name }}"
+            echo "${{ steps.gh_release.outputs.body }}"
+            echo ""
+            cat docs/nexus_description.bbcode
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload to Nexus Mods
-        uses: Nexus-Mods/upload-action@v1
+        uses: Nexus-Mods/upload-action@v1.0.0-beta.8
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
           file_id: ${{ vars.NEXUSMODS_GROUP_ID }}
           filename: LudoTrace-FO4-${{ github.ref_name }}.zip
           version: ${{ github.ref_name }}
           display_name: LudoTrace FO4 ${{ github.ref_name }}
-          description: ${{ steps.gh_release.outputs.body }}
+          description: ${{ steps.nexus_desc.outputs.description }}
           archive_existing_version: true
