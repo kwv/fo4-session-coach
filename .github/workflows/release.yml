@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build release zip
         run: |
@@ -30,13 +32,39 @@ jobs:
           files: LudoTrace-FO4-${{ github.ref_name }}.zip
           generate_release_notes: true
 
+      - name: Update CHANGELOG.md
+        id: changelog
+        run: |
+          VERSION="${{ github.ref_name }}"
+          DATE=$(date -u +%Y-%m-%d)
+          NOTES="${{ steps.gh_release.outputs.body }}"
+
+          {
+            printf '## %s — %s\n\n' "$VERSION" "$DATE"
+            echo "$NOTES"
+            echo ""
+            cat CHANGELOG.md 2>/dev/null || true
+          } > CHANGELOG.md.tmp
+          mv CHANGELOG.md.tmp CHANGELOG.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG.md for $VERSION [skip ci]"
+          git push origin HEAD:main
+
+          # Capture just the current entry for Nexus
+          echo "entry<<EOF" >> "$GITHUB_OUTPUT"
+          printf '## %s — %s\n\n%s\n' "$VERSION" "$DATE" "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Build Nexus description
         id: nexus_desc
         run: |
           {
             echo "description<<EOF"
             printf '[size=5][b]Changelog — %s[/b][/size]\n\n' "${{ github.ref_name }}"
-            echo "${{ steps.gh_release.outputs.body }}"
+            echo "${{ steps.changelog.outputs.entry }}"
             echo ""
             cat docs/nexus_description.bbcode
             echo "EOF"
