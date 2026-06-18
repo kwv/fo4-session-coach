@@ -24,7 +24,19 @@ jobs:
           cd ..
 
       - name: Create GitHub Release
+        id: gh_release
         uses: softprops/action-gh-release@v2
         with:
           files: LudoTrace-FO4-${{ github.ref_name }}.zip
           generate_release_notes: true
+
+      - name: Upload to Nexus Mods
+        uses: Nexus-Mods/upload-action@v1
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ vars.NEXUSMODS_GROUP_ID }}
+          filename: LudoTrace-FO4-${{ github.ref_name }}.zip
+          version: ${{ github.ref_name }}
+          display_name: LudoTrace FO4 ${{ github.ref_name }}
+          description: ${{ steps.gh_release.outputs.body }}
+          archive_existing_version: true
