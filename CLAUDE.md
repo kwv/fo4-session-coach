@@ -39,8 +39,7 @@ All machine-specific paths live in `tools/paths.local.bat` (gitignored). Variabl
 
 Derived paths:
 - Compiler: `%CK%\Papyrus Compiler\PapyrusCompiler.exe`
-- Snapshot output: `%GAME%\LudoTrace_Snapshot.json`
-- Session events log: `%GAME%\LudoTrace_Events.jsonl`
+- Session events log: `%GAME%\lt_fo4_events.jsonl`
 
 ## Log paths
 - F4SE + Hydra logs: `%MY_GAMES%\F4SE\`
@@ -85,22 +84,25 @@ Quick quit: `qqq`
 - Script Function Runner requires the callback function to have the exact Params struct as its only parameter
 
 ### Session tracking model
+
+The mod is a dumb event emitter. It does not manage sessions — that is lt-client's responsibility.
+
 ```
 On Load:
   → Register for all Hydra events (see OnPostLoadGameEvent)
-  → Write line 1 of LudoTrace_Events.jsonl: session_start (clears file first)
+  → Append session_start to lt_fo4_events.jsonl
     — includes level, SPECIAL, bobbleheads, ammo counts, aid counts
 
 During session:
-  → Each event appends one JSON line to LudoTrace_Events.jsonl
+  → Each event appends one JSON line to lt_fo4_events.jsonl
     {"type":"location","name":"Goodneighbor","time":"14:32"}
     {"type":"kill","target":"Raider","killer":"","time":"14:45"}
 
 On Save:
-  → Append final line: session_end (same schema as session_start)
-  → Full session = first line (session_start) + events + last line (session_end)
-  → Claude diffs session_start vs session_end for inventory/SPECIAL deltas
+  → Append session_end (same schema as session_start)
 ```
+
+Standalone users (no lt-client) read `lt_fo4_events.jsonl` directly and paste it into Claude.ai.
 
 ### Snapshot format (actual — JSONL)
 See README.md "Snapshot format" section for sample rows of every event type.
@@ -136,21 +138,19 @@ Key event types: `session_start`, `session_end`, `location`, `near_collectible`,
 
 ## What's proven working
 - Auto-trigger on load via Script Function Runner ✅
-- File writing via `Hydra:IO:File.WriteAllLines` ✅
-- File appending via `Hydra:IO:File.AppendLine` ✅
+- File writing via `Hydra:IO:File.WriteAllLines` and `AppendLine` ✅
 - `player.GetDisplayName()` for player name ✅
 - `Hydra:Time` for in-game date/time ✅
 - SPECIAL stats via `GetValue` ✅
-- 31 event types streaming to `LudoTrace_Events.jsonl` via global `CreateGlobalRef` callbacks ✅
-- `session_start` written on load (clears JSONL), `session_end` appended on save ✅
-- `session_start`/`session_end` include: level, SPECIAL, bobbleheads, ammo counts, aid counts ✅
+- 31 event types streaming to `lt_fo4_events.jsonl` via global `CreateGlobalRef` callbacks ✅
+- `session_start`/`session_end` include: level, SPECIAL, bobbleheads, ammo `[{name,form_id,count}]`, aid `[{name,form_id,count}]` ✅
+- `level` event includes full perk snapshot via `BuildPerksJson()` ✅
 - `CellEnterExit` filtered to player via `kSourceActor == Game.GetPlayer()` for location tracking ✅
 - `Hydra:Forms:Cell.GetLocation()` resolves interior cells to named Location ✅
 - `Hydra:TempSet` for location dedup across a session ✅
 - Bobblehead radar: `near_collectible` event + HUD notification when entering a bobblehead location ✅
 - `OnItemAddRemoveEvent`: `found` event for bobblehead pickup, `used` event for aid items ✅
 - `stat` events (`MiscStatChange`) capture Objects Built, Creatures Killed, Caps, etc. ✅
-- Ammo + aid inventory snapshot via `Game.GetForm()` + `GetItemCount()` (same pattern as bobbleheads) ✅
 - `av_change` events filtered to SPECIAL form IDs 706–712 ✅
 
 ## Event blacklist (too noisy, commented out)
@@ -167,8 +167,9 @@ The `av_change` event fires on bobblehead pickup, capturing the before/after val
 - **Layer 1** ✅ SPECIAL, level, player name, auto-trigger on load, repo scaffolded
 - **Prove-out** ✅ Global Hydra event callbacks confirmed working
 - **Layer 2** ✅ session_start/end model, JSONL event stream, 31 event types, bobblehead radar, ammo+aid inventory snapshot
-- **Next**: Perks snapshot (DumpPerks works via console, needs safe call site), magazines, active quests
-- **Later**: Session delta summary, holotape trigger, LudoTrace.esp
+- **Layer 3** ✅ ammo/aid with form_id, perk snapshot at level-up, clean JSONL (no fragment lines)
+- **Next**: magazines, active quests snapshot
+- **Later**: holotape trigger, LudoTrace.esp
 
 ## Mod dependencies (must be installed by end user)
 - F4SE (f4se.silverlock.org)
