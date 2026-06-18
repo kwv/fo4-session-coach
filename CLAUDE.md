@@ -163,14 +163,6 @@ We ARE registered for `ActorValueChange`, but filter to SPECIAL form IDs 706–7
 All other AV changes (health, AP, rad, etc.) are dropped in the callback before logging.
 The `av_change` event fires on bobblehead pickup, capturing the before/after values.
 
-## Layer roadmap
-- **Layer 1** ✅ SPECIAL, level, player name, auto-trigger on load, repo scaffolded
-- **Prove-out** ✅ Global Hydra event callbacks confirmed working
-- **Layer 2** ✅ session_start/end model, JSONL event stream, 31 event types, bobblehead radar, ammo+aid inventory snapshot
-- **Layer 3** ✅ ammo/aid with form_id, perk snapshot at level-up, clean JSONL (no fragment lines)
-- **Next**: magazines, active quests snapshot
-- **Later**: holotape trigger, LudoTrace.esp
-
 ## Mod dependencies (must be installed by end user)
 - F4SE (f4se.silverlock.org)
 - Hydra (nexusmods.com/fallout4/mods/104159)
