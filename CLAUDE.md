@@ -28,6 +28,7 @@ fallout4/    ← source of truth
   tools/paths.local.bat           ← gitignored, machine-specific paths
   tools/paths.example.bat
   docs/coaching_prompt.md         ← the Claude.ai prompt that ships with the mod
+  docs/hydra-api.md               ← Hydra API reference, bugs, event decisions (read before touching events)
   referenceIds.tsv                ← Fallout 4 form IDs (perks, ammo, weapons, materials, consumables, weapon mods)
 ```
 
@@ -110,58 +111,16 @@ Key event types: `session_start`, `session_end`, `location`, `near_collectible`,
 `found`, `used`, `kill`, `stat`, `quest`, `quest_stage`, `av_change`, `combat`,
 `limb`, `menu_mode`, `activate`, `container`, `destruction`, `objective`.
 
-## Hydra API we use
-- `Hydra:IO:File.WriteAllLines(path, string[])` — overwrite file
-- `Hydra:IO:File.AppendLine(path, string)` — append one line (used for event stream)
-- `Hydra:IO:File.ReadAllLines(path)` — read back a file
-- `Hydra:IO:File.Exists(path)` — check before reading
-- `Hydra:Time.GetGameYear/Month/Day/Hour/Minute()` — in-game calendar
-- `Hydra:Events.RegisterFor*(FunctionRef)` — event listeners (31 event types active)
-- `Hydra:FunctionRefs.CreateGlobalRef(scriptName, functionName)` — FunctionRef for a global function
-- `Hydra:TempSet.Add(namespace, key)` / `ContainsKey(namespace, key)` — in-memory set, resets on load; used for location dedup (namespace "sc_locations")
-- `Hydra:Forms:Cell.GetLocation(cell)` — resolves a cell to its named Location form
-- `Hydra:Forms:Actor.GetActorBase(actor)` — get ActorBase from Actor
-- `Hydra:Forms:ActorBase.GetPerks(actorBase)` — returns PerkRank[] (crashes at load time; safe via console trigger only)
-- `Hydra:Strings.Contains(str, substr)` — substring check
+## Hydra reference
 
-## Known Hydra issues
-- `Hydra:Forms:Form.GetName(actor)` crashes — use `actor.GetDisplayName()` for Actor/ObjectReference
-- `Location` is not a Form subtype in Papyrus — `loc as Form` is unsafe; use `Hydra:Forms:Cell.GetLocation(cell)` then `loc.GetName()` instead
-- `LocationEnterExit` fires for ALL actors (NPC home locations) — replaced by `CellEnterExit` filtered to `kSourceActor == Game.GetPlayer()`
-- `Hydra:Forms:ActorBase.GetPerks()` crashes when called at load time (OnPostLoadGame context); safe when triggered from console via `cgf`
+API surface, known bugs, event decisions, and validated patterns: see `docs/hydra-api.md`.
+Read it before adding new events or touching file I/O.
 
 ## Papyrus reserved name gotchas
 - `state` is a reserved keyword (case-insensitive, same as `State`/`EndState`) — use `sState`
 - `action` is a reserved base script type — use `sAction`
 - `OnMenuOpenCloseEvent` conflicts with a vanilla ScriptObject event — our Hydra callback uses `OnMenuOpenCloseCB` instead
 - Helper functions that return a value must declare return type: `string Function Foo() Global` not `Function Foo() Global`
-
-## What's proven working
-- Auto-trigger on load via Script Function Runner ✅
-- File writing via `Hydra:IO:File.WriteAllLines` and `AppendLine` ✅
-- `player.GetDisplayName()` for player name ✅
-- `Hydra:Time` for in-game date/time ✅
-- SPECIAL stats via `GetValue` ✅
-- 31 event types streaming to `lt_fo4_events.jsonl` via global `CreateGlobalRef` callbacks ✅
-- `session_start`/`session_end` include: level, SPECIAL, bobbleheads, ammo `[{name,form_id,count}]`, aid `[{name,form_id,count}]` ✅
-- `level` event includes full perk snapshot via `BuildPerksJson()` ✅
-- `CellEnterExit` filtered to player via `kSourceActor == Game.GetPlayer()` for location tracking ✅
-- `Hydra:Forms:Cell.GetLocation()` resolves interior cells to named Location ✅
-- `Hydra:TempSet` for location dedup across a session ✅
-- Bobblehead radar: `near_collectible` event + HUD notification when entering a bobblehead location ✅
-- `OnItemAddRemoveEvent`: `found` event for bobblehead pickup, `used` event for aid items ✅
-- `stat` events (`MiscStatChange`) capture Objects Built, Creatures Killed, Caps, etc. ✅
-- `av_change` events filtered to SPECIAL form IDs 706–712 ✅
-
-## Event blacklist (too noisy, commented out)
-- `perk_run` (`PerkEntryRun`) — passive perk effects every calculation, 68K events/session
-- `trigger` (`TriggerEnterLeave`) — invisible volumes, pure noise
-- `equip` (`ItemEquipUnequip`) — fires for NPCs too, unreliable for player gear
-
-## ActorValueChange / SPECIAL tracking
-We ARE registered for `ActorValueChange`, but filter to SPECIAL form IDs 706–712 only (Strength–Luck).
-All other AV changes (health, AP, rad, etc.) are dropped in the callback before logging.
-The `av_change` event fires on bobblehead pickup, capturing the before/after values.
 
 ## Mod dependencies (must be installed by end user)
 - F4SE (f4se.silverlock.org)
