@@ -12,16 +12,16 @@ RUN_BAT     := $(shell wslpath -w $(CURDIR)/tools/run.bat)
 .PHONY: build run release
 
 build:
-	cmd.exe /c "$(COMPILE_BAT)"
+	$(eval VERSION := $(shell cat VERSION))
+	sed -i "s/__VERSION__/$(VERSION)/" src/LudoTrace.psc
+	cmd.exe /c "$(COMPILE_BAT)" || { git checkout src/LudoTrace.psc; exit 1; }
+	git checkout src/LudoTrace.psc
 
 run:
 	cmd.exe /c "$(RUN_BAT)"
 
-# make release VERSION=v0.4.0
 release:
-ifndef VERSION
-	$(error VERSION is required — usage: make release VERSION=v0.4.0)
-endif
+	$(eval VERSION := $(shell cat VERSION))
 	@if ! git diff --quiet || ! git diff --cached --quiet; then \
 		echo "Error: uncommitted changes — commit or stash before releasing"; exit 1; \
 	fi
