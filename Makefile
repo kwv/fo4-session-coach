@@ -12,7 +12,10 @@ RUN_BAT     := $(shell wslpath -w $(CURDIR)/tools/run.bat)
 .PHONY: build run release
 
 build:
-	cmd.exe /c "$(COMPILE_BAT)"
+	$(eval VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo dev))
+	sed -i "s/__VERSION__/$(VERSION)/" src/LudoTrace.psc
+	cmd.exe /c "$(COMPILE_BAT)" || { git checkout src/LudoTrace.psc; exit 1; }
+	git checkout src/LudoTrace.psc
 
 run:
 	cmd.exe /c "$(RUN_BAT)"

@@ -224,7 +224,7 @@ EndFunction
 ; -----------------------------------------------------------------------
 Function WriteSessionStart() Global
     Log(BuildStateJson("session_start"))
-    Debug.Notification("[LudoTrace] Loaded")
+    Debug.Notification("[LudoTrace __VERSION__] Loaded")
 EndFunction
 
 ; -----------------------------------------------------------------------
