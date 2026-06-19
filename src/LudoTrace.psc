@@ -35,24 +35,6 @@ EndFunction
 ; BuildStateJson — current character state as a JSON string.
 ; Shared by WriteSessionStart and OnPostSaveGameEvent.
 ; -----------------------------------------------------------------------
-string Function BuildPerksJson() Global
-    ActorBase playerBase = Hydra:Forms:Actor.GetActorBase(Game.GetPlayer())
-    Hydra:Forms:ActorBase:PerkRank[] perks = Hydra:Forms:ActorBase.GetPerks(playerBase)
-    string result = "["
-    bool first = true
-    int i = 0
-    while i < perks.Length
-        if perks[i].kPerk != None && perks[i].iRank > 0
-            if !first
-                result += ","
-            endif
-            result += "{\"name\":\"" + perks[i].kPerk.GetName() + "\",\"rank\":" + perks[i].iRank + "}"
-            first = false
-        endif
-        i += 1
-    endwhile
-    return result + "]"
-EndFunction
 
 string Function BuildAmmoJson() Global
     Actor player = Game.GetPlayer()
@@ -478,7 +460,8 @@ Function OnLocationLoadEvent(Hydra:Events:LocationLoadParams akParams) Global
 EndFunction
 
 Function OnLevelIncreaseEvent(Hydra:Events:LevelIncreaseParams akParams) Global
-    Log("{\"type\":\"level\",\"to\":" + akParams.iNewLevel + ",\"perks\":" + BuildPerksJson() + ",\"time\":\"" + GameTime() + "\"}")
+    ; GetPerks crashes in Hydra event callbacks — perks omitted until a safe call site is found (see issue #12)
+    Log("{\"type\":\"level\",\"to\":" + akParams.iNewLevel + ",\"game_time\":\"" + GameTime() + "\"}")
 EndFunction
 
 Function OnQuestStageChangeEvent(Hydra:Events:QuestStageChangeParams akParams) Global
