@@ -38,7 +38,7 @@ Hydra nexus page: nexusmods.com/fallout4/mods/104159
 | `Hydra:Forms:Form.GetName(actor)` crashes | Use `actor.GetDisplayName()` for Actor/ObjectReference |
 | `Location` is not a Form subtype in Papyrus | `loc as Form` is unsafe — use `Hydra:Forms:Cell.GetLocation(cell)` then `loc.GetName()` |
 | `LocationEnterExit` fires for ALL actors including NPCs | Replaced by `CellEnterExit` filtered to `kSourceActor == Game.GetPlayer()` |
-| `Hydra:Forms:ActorBase.GetPerks()` crashes in OnPostLoadGame context | Safe in event callbacks that fire post-load (e.g. OnLevelIncreaseEvent); unsafe only during initial load |
+| `Hydra:Forms:ActorBase.GetPerks()` crashes in all tested Hydra event contexts | No safe call site found — omitted from all events until a workaround is identified (see issue #12) |
 | `AppendLine` concurrent writes produce tail fragments | High-frequency events (menu open/close) racing with save callbacks corrupt the JSONL. Fix: don't register for `MenuOpenClose` — use `MenuModeEnterExit` instead, which fires at a coarser granularity with no concurrency issues |
 
 ## Event decisions
@@ -70,5 +70,4 @@ Approaches confirmed working in production builds:
 - `Hydra:IO:File.AppendLine` for per-event writes — safe as long as events don't fire concurrently
 - `Hydra:Forms:Cell.GetLocation()` on interior cells — resolves correctly to named Location
 - `Hydra:TempSet` namespace `"sc_locations"` for per-session location dedup
-- `BuildPerksJson()` called from `OnLevelIncreaseEvent` — safe post-load; crashes only in OnPostLoadGame context
 - `Game.GetForm(intId)` + `player.GetItemCount(f)` for inventory snapshots (ammo, aid, bobbleheads)

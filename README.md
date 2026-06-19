@@ -103,7 +103,7 @@ Ammo and aid only include non-zero counts. Diffing start vs end gives session de
 {"type":"stat","stat":"Creatures Killed","value":826,"game_time":"05:34"}
 {"type":"quest_stage","quest":"The Road to Freedom","stage":20,"game_time":"03:14"}
 {"type":"quest","name":"Reunions","state":"completed","game_time":"04:45"}
-{"type":"level","to":5,"perks":[{"name":"Rifleman","rank":1},{"name":"Sneak","rank":2}],"game_time":"05:35"}
+{"type":"level","to":5,"game_time":"05:35"}
 {"type":"menu_mode","menu":"PipboyMenu","state":"Entered","game_time":"01:16"}
 {"type":"used","category":"healing","item":"Stimpak","game_time":"05:41"}
 {"type":"used","category":"chem","item":"Jet","game_time":"05:52"}
@@ -115,8 +115,6 @@ Ammo and aid only include non-zero counts. Diffing start vs end gives session de
 `killer` is empty when the player lands the kill directly; a companion name
 indicates companion-assisted kills. `av_change` fires only for SPECIAL stats
 (e.g. bobblehead pickup). `combat.state` 1 = in combat, 2 = out of combat.
-`level` includes the full perk list at the moment of level-up — diff consecutive
-`level` events to see what was selected.
 
 ## Notes
 
