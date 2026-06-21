@@ -38,7 +38,7 @@ Hydra nexus page: nexusmods.com/fallout4/mods/104159
 | `Hydra:Forms:Form.GetName(actor)` crashes | Use `actor.GetDisplayName()` for Actor/ObjectReference |
 | `Location` is not a Form subtype in Papyrus | `loc as Form` is unsafe — use `Hydra:Forms:Cell.GetLocation(cell)` then `loc.GetName()` |
 | `LocationEnterExit` fires for ALL actors including NPCs | Replaced by `CellEnterExit` filtered to `kSourceActor == Game.GetPlayer()` |
-| `Hydra:Forms:ActorBase.GetPerks()` crashes in all tested Hydra event contexts | No safe call site found — omitted from all events until a workaround is identified (see issue #12) |
+| `Hydra:Forms:ActorBase.GetPerks()` crashes in all tested Hydra event contexts | Don't use it. Each FO4 perk *rank* is a distinct `Perk` form, so read perks with vanilla `Actor.HasPerk(perk)` against a hardcoded per-rank form-ID table instead — base-game Papyrus, never touches `Hydra.dll`, safe in any context. See `BuildPerksJson` (form IDs from `referenceIds.tsv`). |
 | `AppendLine` concurrent writes produce tail fragments | High-frequency events (menu open/close) racing with save callbacks corrupt the JSONL. Fix: don't register for `MenuOpenClose` — use `MenuModeEnterExit` instead, which fires at a coarser granularity with no concurrency issues |
 
 ## Event decisions
@@ -71,3 +71,4 @@ Approaches confirmed working in production builds:
 - `Hydra:Forms:Cell.GetLocation()` on interior cells — resolves correctly to named Location
 - `Hydra:TempSet` namespace `"sc_locations"` for per-session location dedup
 - `Game.GetForm(intId)` + `player.GetItemCount(f)` for inventory snapshots (ammo, aid, bobbleheads)
+- `Game.GetForm(intId) as Perk` + `player.HasPerk(perk)` across a per-rank form-ID table for perk snapshots — the crash-free alternative to `GetPerks` (see `BuildPerksJson`, written to `session_start`/`session_end`)
