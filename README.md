@@ -91,9 +91,15 @@ in between.
    {"name":"RadAway","form_id":"0x00023742","count":7},
    {"name":"Jet","form_id":"0x000366C5","count":3},
    {"name":"Stealth Boy","form_id":"0x0004F4A6","count":2}
+ ],
+ "perks":[
+   {"name":"Rifleman","rank":2},
+   {"name":"Gun Nut","rank":1},
+   {"name":"Lone Wanderer","rank":3}
  ]}
 ```
-Ammo and aid only include non-zero counts. Diffing start vs end gives session deltas.
+Ammo and aid only include non-zero counts; `perks` lists only perks the player
+has taken, with their current rank. Diffing start vs end gives session deltas.
 
 **Events** — appended as they happen during the session:
 ```jsonl
