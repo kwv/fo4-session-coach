@@ -661,7 +661,7 @@ string Function BuildStateJson(string asType) Global
     string sAmmo = BuildAmmoJson()
     string sAid = BuildAidJson()
     string sPerks = BuildPerksJson()
-    return "{\"type\":\"" + asType + "\",\"game_date\":\"" + GameDate() + "\",\"game_time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + ",\"bobbleheads\":" + sBob + ",\"ammo\":" + sAmmo + ",\"aid\":" + sAid + ",\"perks\":" + sPerks + "}"
+    return "{\"type\":\"" + asType + "\",\"wall_time\":\"" + (Utility.GetCurrentRealTime() as int) + "\",\"game_date\":\"" + GameDate() + "\",\"game_time\":\"" + GameTime() + "\",\"level\":" + Game.GetPlayerLevel() + ",\"name\":\"" + player.GetDisplayName() + "\"," + special + ",\"bobbleheads\":" + sBob + ",\"ammo\":" + sAmmo + ",\"aid\":" + sAid + ",\"perks\":" + sPerks + "}"
 EndFunction
 
 ; -----------------------------------------------------------------------
